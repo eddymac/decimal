@@ -90,6 +90,7 @@ var x = new Decimal(number) - Creates decimal object giving value of number
                   null (Sets to null)
 x.setValue(number) - Same as above on existing object
 x.isNull()         - Returns true if null, false otherwise
+x.isValid()        - Returns false if initialised incorrectly - will alseays be blank too
 x.toString()       - Returns money number as string (null -> "")
                                           {decimals} must be >= 0
 x.format(decimals) - Returns as string to {decimals} number of decimal places

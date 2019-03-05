@@ -19,10 +19,12 @@ var UnitTests = {
         testok("Blank", x.toString() == "");
         x = new Decimal(null);
         testok("Null", x.toString() == "");
+        testok("Null test", x.isValid() === true);
         x = new Decimal(undef);
         testok("Undefined", x.toString() == "");
         x = new Decimal("rubbish");
         testok("Rubbish", x.toString() == "");
+        testok("Rubbish test", x.isValid() === false);
         x = new Decimal(0);
         testok("Zero int", x.toString() == "0");
         x = new Decimal("0");
@@ -33,6 +35,7 @@ var UnitTests = {
         testok("Number string", x.toString() == "34.56");
         x = new Decimal(-12.34);
         testok("Number negative float", x.toString() == "-12.34");
+        testok("value test", x.isValid() === true);
         x = new Decimal(+12.34);
         testok("Number positive float", x.toString() == "12.34");
         x = new Decimal("-34.56");

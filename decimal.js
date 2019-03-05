@@ -1,9 +1,12 @@
 "use strict";
 
 /*
- Version 1.0
+ Version 1.01
  Copyright: Edward Macnaghten - 5-March-2019
- Release - GPL V3.0
+ License - GPL V3.0
+
+ Release 1.00 - 5-March-2019 Initial release
+ Release 1.01 - 5 March-2019 Added isValid
  
  The Decimal object
  This assumes integers addition and subtraction are OK even if numbers are stored as floats
@@ -27,6 +30,7 @@
                    null (Sets to null)
  x.setValue(number) - Same as above on existing object
  x.isNull()         - Returns true if null, false otherwise
+ x.isValid()        - Returns true if valid or blank, False if initialised wrong (will always be blank)
  x.toString()       - Returns money number as string (null -> "")
                                            {decimals} must be >= 0
  x.format(decimals) - Returns as string to {decimals} number of decimal places
@@ -110,13 +114,14 @@ var _DECIMAL_REGH = /^([+-]?)(\d+)$/
 
 function Decimal(setval)
 {
-    this._negative = false;                         // true if negative
+    this._negative = false;                        // true if negative
     this._whole = 0;                               // Whole number as integer
     this._decimal = 0;                             // Decimal numbver as integer
-    this._dlen = 0;                                 // Number of decimal places
-    this._isblank = true;                           // True if blank
+    this._dlen = 0;                                // Number of decimal places
+    this._isblank = true;                          // True if blank
+    this._isvalid = true;                          // False if invalid number entered
     if(this.coalesce(setval, null) != null)
-        this.setValue(setval.toString());           // Populate above
+        this.setValue(setval.toString());          // Populate above
 }
 
 
@@ -130,6 +135,7 @@ Decimal.prototype = {
         this._decimal = 0;
         this._dlen = 0;
         this._isblank = true;
+        this._isvalid = true;
         if (this.coalesce(setval, "") === "")
             return;
 
@@ -165,6 +171,7 @@ Decimal.prototype = {
                 this._makefm(mat)
             } else {
                 this._isblank = true;
+                this._isvalid = false;
                 this.doerror("Unknown input type: " + setval);
             }
         }
@@ -175,6 +182,11 @@ Decimal.prototype = {
     isNull: function()
     {
         return this._isblank;
+    },
+
+    isValid: function()
+    {
+        return this._isvalid;
     },
 
     toString: function()
