@@ -1,0 +1,144 @@
+The Decimal Javascrip Library
+
+Author(copyright): Edward Macnaghten <eddy@edlsystems.com>
+Version 1.0 - 5-March-2019
+License: GPL-V3.0
+
+INTRODUCTION
+
+This is a pure Javascript library, providing an object for decimal, or money,
+type numbers.
+
+As Javascript itself only uses floats for numbers, inaccuracies for large
+monetry values can occur, especially if "pennies" are included as fractions.
+This library tries to address this issue.  I have included further explanation
+and documentation later in this readme.
+
+INSTALLATION
+
+Copy the "decimal.js" file where it can be loaded by the web page
+(or whatever), and load it in using the
+    <script type="text/javascript" path=path/to/the/decimal.js"></script>
+mechanism, or equivalent if not a web page.
+
+MECHANICS
+
+Before going into the documentation I will describe how the library works.
+Javascript uses (or meant to use) 64 bit floats, using the IEEE 754
+specification.  This provides 1 bit for the sign, 11 bit for the exponent
+and 52 bits for the mantissa.  This mechanics provides accuracy up to
+the limit of the mantissa for integers (which is + or - 2 ^ 53, or
++/- 9,007,199,254,740,992.  However, if fractions are used it is
+unlikely that the binary representation in the float is exactly equal
+what it was "set" to, and these inaccuracies can be exagerated when
+arithmetic operations are performed,  An example of this is is
+
+    23.0 - 7.37
+
+which when calculated as floats does not equal the correct answer.
+
+The Decimal objct here addresses the problem by only storing numbers as
+a set of integers.  One for the whole part, and one for the fraction(or what
+is right of the decimal point). It also stores other relevant information in
+the object if negative, if blank, and the numbe of decimal places there are).
+
+The upshot of only storing integers is it can accurately represent a number
+between +/- 9,007,199,254,740,992.000000000000000, up to 15 decimal places,
+making it workable for money values.
+
+The object handles additions and subtractions well, multiplication as best
+it can, however division it simply converts the numbers to "floats" and
+performs a system division before converting back.  The philosophy behind
+that is that should you need to "divide" in accounting then you may be in
+trouble anyway regarding penny perfect answers, as "rounding to the penny"
+errors are likely to not be totally acurate anyway.
+
+A way to divide some money into 4 "shares" the following method can be used:
+
+    Start ith value "TotalAmount"
+    "TotalAmount" / 4 - rounded to nearest penny -> "Share1"
+    "TotalAmount" - "Share1" -> "WorkingAmount"
+    "WorkingAmount" / 3 - rounded to nearest penny -> "Share 2"
+    "WorkingAmount" - "Share2" -> "(new)WorkingAmount"
+    "(new)WorkingAmount" / 2 - rounded to nearest penny -> "Share 3"
+    "(new)"orkingAmount" - "Share 3" -> "Share 4"
+
+Although not perfect, works.
+
+MONEY AND PENNIES
+
+This object has some "penny" functions and methods, that automatically round
+numbers to nearest penny.  The "Penny" amounts are controlled by global
+variables:
+
+    DECIMAL_PENNIES         : The number of decimal places used for "pennies"
+                              this would be 2 for USD
+    DECIMAL_PENNY_UNIT      : The integer of the smalst "coin".
+                              this would be 1 for USD (1 cent)
+
+They default to 2 and 1 respectively (USD, UKP etc)
+
+USAGE
+
+Usage exmple is as follows
+
+var x = new Decimal()  - Creates blank decimal objct
+var x = new Decimal(number) - Creates decimal object giving value of number
+   number can be: string, examples: "1.23" "-1.456" "3.00" "54"
+                                    "" sets to null
+                  javascript number (floating point)
+                  null (Sets to null)
+x.setValue(number) - Same as above on existing object
+x.isNull()         - Returns true if null, false otherwise
+x.toString()       - Returns money number as string (null -> "")
+                                          {decimals} must be >= 0
+x.format(decimals) - Returns as string to {decimals} number of decimal places
+                                               null -> ""
+x.toFloat()        - Returns the number as a float (null returns null)
+x.toNumber()       - Same as toFloat()
+x.isInt()          - Returns true if an integer (no fraction), false if not
+x.intPart()        - Returns int part of number (negative if appropriate)
+x.fracPart()       - Returns fraction part of number as fraction (negative if appropriate)
+
+Arithmatic, the "value" supplied can be string, number or Decimal (instance of this class)
+
+x.add(value)       - Adds a value to object, returns current object
+x.subtract(value)  - Subtracts a value from object, returns current object
+x.multiply(value)  - Multiplies an object by value, returns current object
+x.divide(value)    - Divides an object by value, returns current object
+x.plus(value)      - Adds a value to this object and returns a new Decimal object
+x.minus(value)     - Subtracts a value from this object and returns a new Decimal object
+x.times(value)     - Multiplies a value and this object and returns a new Decimal object
+x.over(value)      - Divides the object by the value and returns a new Decimal object
+
+Comparisons
+
+x.cmp(value)       - Returns 0 if equal, -1 if object < value, 1 if object > value
+x.gt(value)        - Returns true if object > value, false otherwise
+x.lt(value)        - Returns true if object < value, false otherwise
+x.eq(value)        - Returns true if object = value, false otherwise
+
+x.round(decimals)  - Rounds the value to decimals number of places (decimals must be >= 0)
+x.floor(decimals)  - Rounds down the value to decimals number of places (decimals decimals must be >= 0)
+x.ceil(decimals)   - Rounds up the value to decimals number of places (decimals must be >= 0)
+x.fix(decimals)    - Truncates the fraction to decimals number of places (decimals must be >= 0)
+x.fixup(decimals)  - Truncates the fraction to decimals number of places, always rounding to higer digit
+                                           (decimals must be >= 0)
+
+x.pennies(denom, unit)
+                   - Returns number of pennies,
+                     denom and unit default to DECIMAL_PENNIES and DECIMAL_PENNY_UNIT
+                     denom (DECIMAL_PENNIES) is the number of decimal places pennies use up (2 for USD)
+                     unit (DECIMAL_PENNY_UNIT) is the value of the smallest coin
+x.roundPennies     - Rounds the number of decimal places to nearest penny
+x.fixPennies       - Fix the number of decimal places to nearest penny (truncates)
+x.fixupPennies     - Fix ups the number of decimal places to nearest penny (always rounds to higher digit)
+x.floorPennies     - Rounds down (in value) to number of pennies
+x.ceilPennies      - Rounds up (in value) to number of pennies
+
+
+UNIT TESTS
+
+A simple unit test program is included for the object.  To run, copy the
+"unittests.html", "decimal.js", "unittest.js" into a directory and open
+"unittests.html" in an HTML-5 compatible program, and click on the button.
