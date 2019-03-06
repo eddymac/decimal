@@ -73,6 +73,9 @@ var UnitTests = {
         testok("Dec to 0 dp", (new Decimal("456.789")).format(0) == "456"); 
         testok("Dec to 2 dp", (new Decimal("456.789")).format(2) == "456.78"); 
         testok("Neg Dec to 2 dp", (new Decimal("-456.789")).format(2) == "-456.78"); 
+        testok("Known Error", (new Decimal("132.01")).format(2) == "132.01");
+        testok("Known Error 2", (new Decimal("132.0123")).format(2) == "132.01");
+        testok("Known Error 3", (new Decimal("-132.0123")).format(2) == "-132.01");
     },
 
     test_toNumber: function()

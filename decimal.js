@@ -220,7 +220,13 @@ Decimal.prototype = {
         nval = nval + this._whole.toString();
 
         if(numdec > 0) {
-            nval = nval + "." + (this._decimal.toString() + "0".repeat(numdec)).substring(0, numdec);
+            var dstr = this._decimal.toString().padStart(this._dlen, "0");
+            var dslen = dstr.length;
+            if(dslen < numdec) 
+                dstr = dstr.padEnd(numdec, '0');
+            else if(dslen > numdec)
+                dstr = dstr.substring(0, numdec);
+            nval = nval + "." + dstr;
         }
         return nval;
     },
