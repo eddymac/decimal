@@ -48,7 +48,7 @@ Dependencies
 
 The following MUutilities files are required to be included:
  mdecimal.js - To provice the MDecimal object
- mglobals.js - To provice the mglobals array
+ mglobals.js - To provice the mglobals array and MUtilBase class
 
 
 Methods and Functions
@@ -109,6 +109,7 @@ A Summary copied from the source file:
  setTime(milliseconds)   - Sets the time based on milliseconds, (0 - 86400000)
  setDays(days)           - Only applciable to MTime as an interval
                            sets the number of days
+ zero()                  - Only applicable to MTime - sets to midnight
 
  Getting:
  ~~~~~~~~

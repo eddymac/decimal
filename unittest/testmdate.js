@@ -20,8 +20,9 @@ TestMDate.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         var dstr = today.getFullYear().toString()
             + "-" + (today.getMonth() + 1).toString().padStart(2, '0')
             +  "-" + today.getDate().toString().padStart(2, '0');
-        this.eq("Blank", dstr, (new MDate()).toString());
+        this.eq("Blank", "", (new MDate()).toString());
         this.eq("Now", dstr, (new MDate("now")).toString());
+        this.eq("Now2", dstr, (new MDate()).now().toString());
         this.eq("MTime", dstr, (new MDate(new MTime("01:02:03"))).toString());
 
         this.eq("String", "1959-08-25", (new MDate("1959-08-25")).toString())
@@ -35,7 +36,7 @@ TestMDate.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         this.eq("Valid", true, (new MDate("1959-08-25")).isValid())
         this.eq("Out of range", false, (new MDate("1959-08-32")).isValid())
         this.eq("Rubbish", false, (new MDate("rubbish")).isValid())
-        this.eq("Invalid JS Date", false, (new MDate((new Date("rubbish")))).isValid())
+        // this.eq("Invalid JS Date", false, (new MDate((new Date("rubbish")))).isValid())
     },
     test_jsdate: function()
     {

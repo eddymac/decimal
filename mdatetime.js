@@ -117,11 +117,18 @@ var _MDATETIME_TIMEREG2 = /^(\d+):(\d+):(\d+)$/;
 var _MDATETIME_TIMEREG3 = /^(\d+):(\d+)$/;
 
 function MDateTimeBase() {
+    MUtilBase.call(this);
     this._date = null;
+    this.reset();
 }
 
-MDateTimeBase.prototype = {
+MDateTimeBase.prototype = Object.assign(Object.create(MUtilBase.prototype), {
     constructor: MDateTimeBase,
+    derSetNull: function(ind)
+    {
+        if(ind)
+            this._date = null;
+    },
     jsDate: function()
     {
         // The internal date object
@@ -136,24 +143,28 @@ MDateTimeBase.prototype = {
 
     setDate: function(date)
     {
+        if(!this.isValue()) return this;
         date = mglobals.toMDecimal(date);
-        this._date.setDate(date.intPart());
+        if(date.isValue()) this._date.setDate(date.intPart());
         return this;
     },
     setMonth: function(month)
     {
+        if(!this.isValue()) return this;
         month = mglobals.toMDecimal(month);
-        this._date.setMonth(month.intPart() - 1);
+        if(month.isValue()) this._date.setMonth(month.intPart() - 1);
         return this;
     },
     setYear: function(year)
     {
+        if(!this.isValue()) return this;
         year = mglobals.toMDecimal(year);
-        this._date.setYear(year.intPart());
+        if(year.isValue()) this._date.setYear(year.intPart());
         return this;
     },
     lastDate: function()
     {
+        if(!this.isValue()) return null;
         return this._lastday(this._date.getMonth(), this._date.getFullYear());
     },
 
@@ -228,7 +239,7 @@ MDateTimeBase.prototype = {
         var ted = new Date(new Date(yy, mm, 1, 0, 0, 0, 0).getTime() - _MDATETIME_MILLIS_HALF)
         return ted.getDate()
     },
-}
+});
 
 function MDate(arg)
 {
@@ -244,24 +255,44 @@ MDate.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     setMDate: function(arg)
     {
         // Arg can be a js Date arg, or a Date, MDate, MDateTime, MTime
+        this.reset();
+        if(arg instanceof MUtilBase) {
+            if(!arg.isValue()) {
+                return this;
+            }
+        }
+
+        this.setNull(false);
         if(arg instanceof MDateTime) arg = arg.jsDate();
-        if(arg instanceof MTime) arg = null;        // Just set today
+        if(arg instanceof MTime) {
+            return this.now();
+        }
         if(typeof arg == "string")
             if(arg.toUpperCase() == "NOW")
-                arg = null;
+                return this.now();
         arg = coalesce(arg, null);
         if(arg == null) {
-            this._date  = new Date();
+            this.setNull(true);
+            this._date = null;
         } else if (arg instanceof MDate) {
             this._date = new Date(arg.getYear(), arg.getMonth() - 1, arg.getDate(), 0, 0, 0, 0);
-            return this;
         } else if (arg instanceof Date) {
             this._date = new Date(arg.getFullYear(), arg.getMonth(), arg.getDate(), 0, 0, 0, 0);
         } else {
             this._date = new Date(arg);
+            this.testValid();
         }
         // Set time to zero
+        
         this._date = this._floor(this._date);
+        return this;
+    },
+
+    now: function()
+    {
+        this.reset();
+        this._date  = new Date();
+        this.setNull(false);
         return this;
     },
 
@@ -271,21 +302,30 @@ MDate.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     {
         // Manually assemble the date
         this._date = new Date(year, month-1, day, 0, 0, 0, 0);
+        this._isblank = false;
         return this;
     },
 
-    isValid: function()
+    testValid: function()
     {
         // Checks to see if valid
-        return _MDATETIME_DATEREG.test(this.toString());
+        if(this.isNull())
+        {
+            this.setValid(true);
+        } else if(_MDATETIME_DATEREG.test(this.toString())) {
+            this.setValid(true);
+        } else {
+            this.setValid(false);
+        }
+        return this.isValid();
     },
 
-    toString: function()
+    derToString: function()
     {
         // Returns ISO format string
         return this._date.getFullYear().toString() + "-" +
-               (this._date.getMonth() + 1).toString().padStart(2, '0') + "-" +
-               this._date.getDate().toString().padStart(2, '0');
+            (this._date.getMonth() + 1).toString().padStart(2, '0') + "-" +
+            this._date.getDate().toString().padStart(2, '0');
     },
 
     diffDays: function(odate)
@@ -293,6 +333,7 @@ MDate.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
         // Days difference
         // this is from, odate is to (oposite to subtract)
         odate = mglobals.toMDate(odate);
+        if((!this.isValue()) || (!odate.isValue())) return null;
         return Math.round(odate._date.getTime() / _MDATETIME_MILLIS)
                     - Math.round(this._date.getTime() / _MDATETIME_MILLIS)
     },
@@ -304,6 +345,7 @@ MDate.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
         // this is from, odate is to (oposite to subtract)
 
         odate = mglobals.toMDate(odate);
+        if((!this.isValue()) || (!odate.isValue())) return null;
         var d1 = this._date;
         var d2 = odate._date;
         var m1 = Math.round(d1.getTime() /  _MDATETIME_MILLIS);
@@ -339,13 +381,16 @@ MDate.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     diffYears: function(odate)
     {
         // Easy one
-        return this.diffMonths(odate) / 12;
+        var ret = this.diffMonths(odate);
+        if(ret === null) return ret;
+        return ret / 12;
     },
 
     withDay: function(day)
     {
         // Gets a specific day of the month, defult to 1
         // Does not validate, developer should call isValid if in doubt
+        if(!this.isValue()) return new MDate(null);
         day = coalesce(day, 1);
         if(day instanceof MDecimal)
             day = day.intPart();
@@ -359,6 +404,7 @@ MDate.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     {
         // Gets a specific day of the month, defult to 1st Jan
         // Does not validate, developer should call isValid if in doubt
+        if(!this.isValue()) return new MDate(null);
         day = coalesce(day, 1);
         if(day instanceof MDecimal)
             day = day.intPart();
@@ -383,13 +429,14 @@ MDate.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     addMTime: function(mtime)
     {
         mtime = mglobals.toMTime(mtime);
+        if((!this.isValue()) || (!mtime.isValue())) return this;
         if(!mtime.isValid()) return this;
         return this._addamt(mtime.getDays(), 1);
     },
 
     _addamt: function(amt, factor)
     {
-        if(!this.isValid()) return this;
+        if(!this.isValue()) return this;
         // Add a day(s) to a date
         amt = coalesce(amt, 0);
         if(factor == 1)
@@ -406,6 +453,7 @@ MDate.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     {
         // Add month(s) to a date
         months = mglobals.toMDecimal(months);
+        if((!this.isValue()) || (!months.isValue())) return this;
         if(!months.isValid())
             months.setValue(0);
         this._monthsadd(this._date, months);
@@ -415,6 +463,7 @@ MDate.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     {
         // Add a number of years to a date
         years = mglobals.toMDecimal(years);
+        if((!this.isValue()) || (!years.isValue())) return this;
         if(!years.isValid())
             years.setValue(0);
         this._monthsadd(this._date, years.multiply(12));
@@ -431,9 +480,7 @@ MDate.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
         // 1: date > this
         // -1: date < this
         date = mglobals.toMDate(date);
-
-        if(!this._valids(date))
-            return null;
+        if((!this.isValue()) || (!date.isValue())) return null;
         var m1 = this._date.getTime();
         var m2 = date._date.getTime();
         if (m1 == m2)
@@ -500,14 +547,12 @@ MDate.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     _floor: function(date)
     {
         // Get rid of hours etc
-        return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+        if(!this.isValue())
+            return null;
+        else
+            return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
     },
 
-    _valids: function(odate)
-    {
-        // See if this or odate are both valid
-        return this.isValid() && odate.isValid()
-    }
 });
 
 
@@ -515,12 +560,12 @@ MDate.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
 function MTime(arg)
 {
     MDateTimeBase.call(this);
+    this.reset();
     this._hours = 0;
     this._minutes = 0;
     this._seconds = 0;
     this._millis = 0;
     this._days = 0; // Only used for intervals
-    this._isvalid = true;
     this.setMTime(arg);
 }
 
@@ -529,7 +574,7 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
 
     setMTime: function(arg)
     {
-        this.reset();
+        this.init();
 
         if(coalesce(arg, null) == null) return this;
         if(arg instanceof MDate) return this;       // Just zero
@@ -538,8 +583,10 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
         var minutes = 0;
         var seconds = 0;
         var millis = 0;
+        this.setNull(false);
 
         if(arg instanceof MTime) {
+            this.basecopy(arg);
             this._days = arg._days;
             this._hours = arg._hours;
             this._minutes = arg._minutes;
@@ -557,6 +604,9 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
             arg = arg.toString();
             if(arg.toUpperCase() == "NOW")
                 return this.now();
+            else if(arg == "0")
+                return this.zero();
+
             var match = _MDATETIME_TIMEREG1.exec(arg);
             if(match) {
                 hours = parseInt(match[1]);
@@ -579,7 +629,8 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
                         if(mdt.isValid()) {
                             this.setMTime(mdt);
                         } else {
-                            this._isvalid = false;
+                            this.setNull(true);
+                            this.setValid(false);
                        }
                        return this;
                     }
@@ -588,7 +639,9 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
         }
 
         if (isNaN(hours) || isNaN(minutes) || isNaN(seconds) || isNaN(millis)) {
-            this._isvalid = false;
+            this.init();
+            this.setNull(true);
+            this.setValid(false);
             return this;
         }
 
@@ -601,7 +654,9 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
             this._seconds = seconds;
             this._millis = millis;
         } else {
-            this._isvalid = false;
+            this.init();
+            this.setNull(true);
+            this.setValid(false);
         }
         return this;
     },
@@ -610,7 +665,8 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
 
     assemble: function(hours, minutes, seconds, millis)
     {
-        this.reset();
+        this.init();
+        this.setNull(false);
         this._hours = mglobals.toMDecimal(hours).intPart();
         this._minutes = mglobals.toMDecimal(minutes).intPart();
         this._seconds = mglobals.toMDecimal(seconds).intPart();
@@ -622,7 +678,7 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     now: function()
     {
         var date = new Date();
-        this.reset();
+        this.init();
         this._hours = date.getHours();
         this._minutes = date.getMinutes();
         this._seconds = date.getSeconds();
@@ -630,29 +686,36 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
         return this;
     },
 
-    reset: function()
+    zero: function()
     {
+        this.init();
+        this.setNull(false);
+        return this;
+    },
+
+    init: function()
+    {
+        this.reset();
         this._hours = 0;
         this._minutes = 0;
         this._seconds = 0;
         this._millis = 0;
         this._days = 0; // Only used for intervals
-        this._isvalid = true;
         return this;
     },
 
-    isValid: function() { return this._isvalid; },
-
     truncate: function()
     {
-        this._millis = 0;
+        if(this.isValue())
+            this._millis = 0;
         return this;
     },
 
     addDays: function(days)
     {
-        if (!(this._isvalid)) return this;
         days = mglobals.toMDecimal(days);
+        if((!this.isValid()) || (!days.isValue())) return this;
+        if(!this.isValue()) this.zero();
 
         this._days = this._days + days.intPart();
         var hours = days.fracPart() * 24;
@@ -664,30 +727,37 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
 
     addHours: function(hours)
     {
-        if (!(this._isvalid)) return this;
-        this._paddhours(mglobals.toMDecimal(hours));
+        hours = mglobals.toMDecimal(hours);
+        if((!this.isValid()) || (!hours.isValue())) return this;
+        if(!this.isValue()) this.zero();
+        this._paddhours(hours);
         this._rationalise();
         return this;
     },
 
     addMinutes: function(minutes)
     {
-        if (!(this._isvalid)) return this;
-        this._paddminutes(mglobals.toMDecimal(minutes));
+        minutes = mglobals.toMDecimal(minutes);
+        if((!this.isValid()) || (!minutes.isValue())) return this;
+        if(!this.isValue()) this.zero();
+        this._paddminutes(minutes);
         this._rationalise();
         return this;
     },
     addSeconds: function(seconds)
     {
-        if (!(this._isvalid)) return this;
-        this._paddseconds(mglobals.toMDecimal(seconds));
+        seconds = mglobals.toMDecimal(seconds);
+        if((!this.isValid()) || (!seconds.isValue())) return this;
+        if(!this.isValue()) this.zero();
+        this._paddseconds(seconds);
         this._rationalise();
         return this;
     },
     addMilliseconds: function(millis)
     {
-        if (!(this._isvalid)) return this;
         millis = mglobals.toMDecimal(millis);
+        if((!this.isValid()) || (!millis.isValue())) return this;
+        if(!this.isValue()) this.zero();
         this._millis += millis.intPart();
         this._rationalise();
         return this;
@@ -696,7 +766,8 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     addMTime: function(mtime)
     {
         mtime = mglobals.toMTime(otime);
-        if((!this.isValid()) || (!mtime.isValid())) return this;
+        if((!this.isValid()) || (!mtime.isValue())) return this;
+        if(!this.isValue()) this.zero();
         this._hours += otime._hours;
         this._minutes += otime._minutes;
         this._seconds += otime._seconds;
@@ -710,11 +781,8 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     {
         otime = mglobals.toMTime(otime);
         var ans = new MTime();
-        if(!this._isvalid)
-        {
-            ans._isvalid = false;
-            return ans;
-        }
+        if((!this.isValid()) || (!otime.isValue())) return ans;
+        ans.setNull(false);
         ans._hours = otime._hours - this._hours;
         ans._minutes = otime._minutes - this._minutes;
         ans._seconds = otime._seconds - this._seconds;
@@ -726,7 +794,7 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     diffDays: function(otime)
     {
         var diff = this.diffMTime(otime);
-        if(!diff.isValid()) return null;
+        if(!diff.isValue()) return null;
         var ans = diff._days;
 
         var frac = diff._millis / 1000;
@@ -738,7 +806,7 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     diffHours: function(otime)
     {
         var diff = this.diffMTime(otime);
-        if(!diff.isValid()) return null;
+        if(!diff.isValue()) return null;
         var ans = diff._days;
         ans = (ans * 24) + diff._hours;
 
@@ -750,7 +818,7 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     diffMinutes: function(otime)
     {
         var diff = this.diffMTime(otime);
-        if(!diff.isValid()) return null;
+        if(!diff.isValue()) return null;
         var ans = diff._days;
         ans = (ans * 24) + diff._hours;
         ans = (ans * 60) + diff._minutes;
@@ -762,7 +830,7 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     diffSeconds: function(otime)
     {
         var diff = this.diffMTime(otime);
-        if(!diff.isValid()) return null;
+        if(!diff.isValue()) return null;
         var ans = diff._days;
         ans = (ans * 24) + diff._hours;
         ans = (ans * 60) + diff._minutes;
@@ -774,7 +842,7 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     diffMilliseconds: function(otime)
     {
         var diff = this.diffMTime(otime);
-        if(!diff.isValid()) return null;
+        if(!diff.isValue()) return null;
         var ans = diff._days;
         ans = (ans * 24) + diff._hours;
         ans = (ans * 60) + diff._minutes;
@@ -783,28 +851,35 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
         return ans;
     },
 
-    getHours: function() { return this._hours; },
-    getMinutes: function() { return this._minutes; },
-    getSeconds: function() { return this._seconds; },
-    getMilliseconds: function() { return this._millis; },
-    getDays: function() { return this._days; },
+    getHours: function() { return this._getval(this._hours); },
+    getMinutes: function() { return this._getval(this._minutes); },
+    getSeconds: function() { return this._getval(this._seconds); },
+    getMilliseconds: function() { return this._getval(this._millis); },
+    getDays: function() { return this._getval(this._days); },
     getTime: function()
     {
         // Returns as milliseconds (including "days" for intervals)
-        return (((((((this._days * 24) + this._hours) * 60) + this._minutes) * 60) + this._seconds) * 1000) + this._millis;
+        return this._getval((((((((this._days * 24) + this._hours) * 60) + this._minutes) * 60) + this._seconds) * 1000) + this._millis);
     },
 
-    setHours: function(hours) { this._hours = this._exint(hours); this._rationalise(); return this; },
-    setMinutes: function(minutes) { this._minutes = this._exint(minutes); this._rationalise(); return this; },
-    setSeconds: function(seconds) { this._seconds = this._exint(seconds); this._rationalise(); return this; },
-    setMilliseconds: function(millis) { this._millis = this._exint(millis); this._rationalise(); return this; },
-    setDays: function(days) { this._days = this._exint(days); this._rationalise(); return this; },
+    _getval: function(val)
+    {
+        if(this.isValue)
+            return val;
+        else
+            return null;
+    },
 
-    toString: function()
+    setHours: function(hours) { if(this.isValue()) {this._hours = this._exint(hours); this._rationalise();} return this; },
+    setMinutes: function(minutes) { if(this.isValue()) {this._minutes = this._exint(minutes); this._rationalise();} return this; },
+    setSeconds: function(seconds) { if(this.isValue()) {this._seconds = this._exint(seconds); this._rationalise();} return this; },
+    setMilliseconds: function(millis) { if(this.isValue()) {this._millis = this._exint(millis); this._rationalise();} return this; },
+    setDays: function(days) { if(this.isValue()) {this._days = this._exint(days); this._rationalise();} return this; },
+
+    derToString: function()
     {
         // Returns ISO time, does not apply to intervals
-        if(!(this.isValid())) return null;
-        var ret =  this._hours.toString().padStart(2, '0') + ":" +
+         var ret =  this._hours.toString().padStart(2, '0') + ":" +
                     this._minutes.toString().padStart(2, '0') + ":" +
                     this._seconds.toString().padStart(2, '0');
         if(this._millis > 0) ret = ret + "." + this._millis.toString().padStart(3, '0');
@@ -814,17 +889,19 @@ MTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     toShortString: function()
     {
         // Returns ISO time, does not apply to intervals
-        if(!(this.isValid())) return null;
-        return this._hours.toString().padStart(2, '0') + ":" +
-               this._minutes.toString().padStart(2, '0')
+        if(!this.isValue())
+            return "";
+        else
+            return this._hours.toString().padStart(2, '0') + ":" +
+                this._minutes.toString().padStart(2, '0')
     },
 
     cmp: function(otime)
     {
         otime = mglobals.toMTime(otime);
+        if(this.isValue() || otime.isValue()) return null;
         var ret = 0;
 
-        if((!this.isValid()) || (!otime.isValid())) return null;
         if (this._days > otime._days)
             ret = 1;
         else if (this._days < otime._days)
@@ -935,6 +1012,21 @@ MDateTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
 
     setMDateTime: function(arg)
     {
+        this.reset();
+        arg = coalesce(arg, null);
+        if(arg == null) {
+            this.setNull();
+            return this;
+        }
+        if(arg instanceof MUtilBase) {
+            if(!arg.isValue()) {
+                this.setNull();
+                if(!arg.isValid())
+                    this.setValid(false);
+                return this;
+            } 
+        }
+        this.setNull(false);
         if(arg instanceof Date) {
             this._date  = new Date(arg.getTime());
         } else if(arg instanceof MDateTime) {
@@ -957,21 +1049,35 @@ MDateTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
         } else {
             this._date = new Date(arg);
         }
+        if(!this.testValid()) {
+            this.reset();
+            this.setValid(false);
+        }
+        return this;
+    },
+
+    now: function()
+    {
+        this.reset();
+        this._date = new Date();
+        return this;
     },
 
     copy: function() {return new MDateTime(this); },
 
     assemble: function(year, month, day, hours, minutes, seconds, millis)
     {
+        this.reset();
         millis = coalesce(millis, 0);
         seconds = coalesce(seconds, 0);
         minutes = coalesce(minutes, 0);
         hours = coalesce(hours, 0);
         this._date = new Date(year, month-1, day, hours, minutes, seconds, millis);
+        this.setNull(false);
         return this;
     },
 
-    isValid: function()
+    testValid: function()
     {
         return(!(isNaN(this._date.getTime())));
     },
@@ -979,11 +1085,13 @@ MDateTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     setMDate: function(mdate)
     {
         mdate = mglobals.toMDate(mdate);
-        if(!(mdate.isValid())) return this;
+        if(!(mdate.isValue())) return this;
+        if(!this.isValue) this.now();
 
         // Need to be careful as month date can get out of range
         // so create a new jsDate
         // Daylight saving errors cnnot be avoided
+
 
         this._date = new Date(mdate.getYear(), mdate.getMonth() - 1, mdate.getDate(),
                                     this._date.getHours(), this._date.getMinutes(), this._date.getSeconds(), this._date.getMilliseconds());
@@ -993,7 +1101,8 @@ MDateTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     setMTime: function(mtime)
     {
         mtime = mglobals.toMTime(mtime);
-        if(!(mtime.isValid())) return this;
+        if(!(mtime.isValue())) return this;
+        if(!this.isValue) this.now();
 
         // Create a new object for possible daylight saving errors
         // Daylight saving errors cnnot be avoided
@@ -1005,6 +1114,7 @@ MDateTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
 
     addYears: function(years)
     {
+        if(!this.isValue()) return this;
         var mdate = new MDate(this);
         mdate.addYears(years);
         this.setMDate(mdate);
@@ -1013,6 +1123,7 @@ MDateTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
 
     addMonths: function(months)
     {
+        if(!this.isValue()) return this;
         var mdate = new MDate(this);
         mdate.addMonths(months);
         this.setMDate(mdate);
@@ -1021,6 +1132,7 @@ MDateTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
 
     addDays: function(days)
     {
+        if(!this.isValue()) return this;
         var mdate = new MDate(this);
         mdate.addDays(days);
         this.setMDate(mdate);
@@ -1038,19 +1150,26 @@ MDateTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     {
         // Will ignoe daylight saving for days here
         mtime = mglobals.toMTime(mtime);
+        if((!this.isValue()) || (!mtime.isValue())) return this;
         return this._addmillis(mtime.getTime(), 1);
     },
 
     floor: function()
     {
         // Zeroes the hours, etc
-        this.setMDateTime(new MDate(this));
+        if(this.isValue())
+            this.setMDateTime(new MDate(this));
         return this;
     },
 
     diffDays: function(odate) {
-        return (new MDate(this)).diffDays(odate)
-            + coalesce((new MTime(this)).diffDays(odate), 0);
+        if(!this.isValue()) return this;
+        var d1 = (new MDate(this)).diffDays(odate);
+        var d2 = (new MTime(this)).diffDays(odate);
+        if(d1 === null || d2 === null)
+            return null;
+        else
+            return d1 + d2;
     },
     diffMonths: function(odate) { return (new MDate(this)).diffMonths(odate); },
     diffYears: function(odate) { return (new MDate(this)).diffYears(odate); },
@@ -1060,15 +1179,14 @@ MDateTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
     diffMilliseconds: function(odate)
     {
         odate = mglobals.toMDateTime(odate);
-        if((!this.isValid()) && (!odate.isValid())) return null;
+        if((!this.isValue()) || (!odate.isValue())) return null;
         return odate._date.getTime() - this._date.getTime();
     },
 
     diffMTime: function(odate)
     {
         odate = mglobals.toMDateTime(odate);
-        console.log(odate);
-        if((!this.isValid()) || (!(odate.isValid()))) return new MTime("rubbish");
+        if((!this.isValue()) || (!(odate.isValue()))) return new MTime(null);
 
         var wdays = (new MDate(this)).diffDays(odate);
         var ans = (new MTime(this)).diffMTime(odate);
@@ -1082,39 +1200,38 @@ MDateTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
 
     setHours: function(hours)
     {
-        this._date.setHours(mglobals.toMDecimal(hours).intPart());
+        if(this.isValue())
+            this._date.setHours(mglobals.toMDecimal(hours).intPart());
         return this;
     },
     setMinutes: function(minutes)
     {
-        this._date.setMinutes(mglobals.toMDecimal(minutes).intPart());
+        if(this.isValue())
+            this._date.setMinutes(mglobals.toMDecimal(minutes).intPart());
         return this;
     },
     setSeconds: function(seconds)
     {
-        this._date.setSeconds(mglobals.toMDecimal(seconds).intPart());
+        if(this.isValue())
+            this._date.setSeconds(mglobals.toMDecimal(seconds).intPart());
         return this;
     },
     setMilliseconds: function(millis)
     {
-        this._date.setMilliseconds(mglobals.toMDecimal(millis).intPart());
+        if(this.isValue())
+            this._date.setMilliseconds(mglobals.toMDecimal(millis).intPart());
         return this;
     },
-    toString: function()
+    derToString: function()
     {
-        if (!(this.isValid())) return null;
-        return (new MDate(this)).toString() + "T" + (new MTime(this).toString());
+       return (new MDate(this)).toString() + "T" + (new MTime(this).toString());
     },
     cmp: function(odate)
     {
-        console.log(odate);
         odate = mglobals.toMDateTime(odate);
-        console.log(odate);
-        if(!this.isValid() || (!odate.isValid())) return null;
+        if(!this.isValue() || (!odate.isValue())) return null;
         var lhs = this._date.getTime();
         var rhs = odate._date.getTime();
-        console.log(lhs);
-        console.log(rhs);
         var ret = 0;
         if(lhs > rhs)
             ret = 1;
@@ -1123,15 +1240,15 @@ MDateTime.prototype = Object.assign(Object.create(MDateTimeBase.prototype), {
         return ret;
     },
 
-    getHours: function() {return this._date.getHours(); },
-    getMinutes: function() {return this._date.getMinutes(); },
-    getSeconds: function() {return this._date.getSeconds(); },
-    getMilliseconds: function() {return this._date.getMilliseconds(); },
+    getHours: function() {if (!this.isValue()) return null; else return this._date.getHours(); },
+    getMinutes: function() {if (!this.isValue()) return null; else return this._date.getMinutes(); },
+    getSeconds: function() {if (!this.isValue()) return null; else return this._date.getSeconds(); },
+    getMilliseconds: function() {if (!this.isValue()) return null; else return this._date.getMilliseconds(); },
 
     // Private stuff
     _addmillis: function(millis, factor)
     {
-        if(!this.isValid()) return this;
+        if(!this.isValue()) return this;
         this._date = new Date(this._date.getTime() + mglobals.toMDecimal(millis).multiply(factor).intPart());
         return this;
     },

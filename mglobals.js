@@ -60,3 +60,89 @@ function coalesce(see, def)
         return see;
 }
 
+/*
+ A MUtilBase class
+ An "interface" class that supports:
+ isNull()     - If it is blank
+ isValid()    - If it is valid
+ toString()   - Convert to a string
+ setNull(ind) - Sets to Null
+ setValid(ind) - Sets valid flag
+
+ Preoperties and methods may be derived, so the
+ private members here (_isblank and _isvalid)
+ need to remain private
+ Defined to force implementations
+ */
+
+function MUtilBase()
+{
+    this._isblank = true;
+    this._isvalid = true;
+}
+
+MUtilBase.prototype = {
+    constructor: MUtilBase,
+    reset: function()
+    {
+        this._isblank = true;
+        this._isvalid = true;
+    },
+    basecopy: function(other)
+    {
+        this._isblank = other._isblank;
+        this._isvalid = other._isvalid;
+    },
+    isNull: function() {return this._isblank; },
+    isValid: function() {return this._isvalid; },
+    isValue: function()
+    {
+        if((!this.isNull()) && (this.isValid()))
+            return true;
+        else
+            return false;
+    },
+            
+    setNull: function(ind)
+    {
+        ind = coalesce(ind, null);
+        if(ind === null)
+            this._isblank = true;
+        else if(ind)
+            this._isblank = true;
+        else
+            this._isblank = false;
+        this.derSetNull(this.isNull());
+    },
+    setValid: function(ind)
+    {
+        ind = coalesce(ind, null);
+        if(ind === null)
+            this._isvalid = true;
+        else if(ind)
+            this._isvalid = true;
+        else
+            this._isvalid = false;
+        this.derSetValid(this.isValid());
+    },
+    toString: function()
+    {
+        if(!this.isValid())
+            return "";      // maybe change to "#Error" or something
+        if(this.isNull())
+            return "";
+        else
+            return this.derToString();
+    },
+
+    // Following can be overridden
+    derSetNull: function(ind) {},
+    derSetValid: function(ind) {},
+    derSetNull: function(ind) {},
+    derSetValid: function(ind) {}
+}
+            
+
+        
+
+    

@@ -9,6 +9,10 @@ NOTE - "mutilities.js" is the ID of the pckage.  There is no file named that.
 Version
 ~~~~~~~
 
+Version 2.1 - 28 march 2017 - Enable MDateTime stuff to have null values
+                              Added MUtilBase for everything to facilitate
+                              simpler API in practice
+
 Version 2.0 - 17 March 2017 - Included the "mdatetime.js" family
                               Various bug fixes
 Version 1.0 -  5 March 2017 - Included the "mdecimal.js" array

@@ -113,38 +113,36 @@ var _MDECIMAL_REGH = /^([+-]?)(\d+)$/
 
 function MDecimal(setval)
 {
+    MUtilBase.call(this);
     this._negative = false;                        // true if negative
     this._whole = 0;                               // Whole number as integer
     this._decimal = 0;                             // MDecimal numbver as integer
     this._dlen = 0;                                // Number of decimal places
-    this._isblank = true;                          // True if blank
-    this._isvalid = true;                          // False if invalid number entered
     if(coalesce(setval, null) != null)
         this.setValue(setval.toString());          // Populate above
 }
 
 
-MDecimal.prototype = {
+MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
     constructor: MDecimal,
 
     setValue: function(setval)
     {
+        this.reset();
         this._negative = false;
         this._whole = 0;
         this._decimal = 0;
         this._dlen = 0;
-        this._isblank = true;
-        this._isvalid = true;
         if (coalesce(setval, "") === "")
             return;
 
         if(setval instanceof MDecimal)
         {
+            this.basecopy(setval);
             this._negative = setval._negative;
             this._whole = setval._whole;
             this._decimal = setval._decimal;
             this._dlen = setval._dlen;
-            this._iablank = setval._isblank;
             return;
         }
 
@@ -169,8 +167,8 @@ MDecimal.prototype = {
             if(mat) {
                 this._makefm(mat)
             } else {
-                this._isblank = true;
-                this._isvalid = false;
+                this.reset();
+                this.setValid(false);
                 this.doerror("Unknown input type: " + setval);
             }
         }
@@ -178,20 +176,20 @@ MDecimal.prototype = {
         return this;
     },
 
-    isNull: function()
+    setZero: function()
     {
-        return this._isblank;
+        this.reset();
+        this._negative = false;
+        this._whole = 0;
+        this._decimal = 0;
+        this._dlen = 0;
+        this.setNull(false);
+        return this;
     },
 
-    isValid: function()
-    {
-        return this._isvalid;
-    },
-
-    toString: function()
+    derToString: function()
     {
         var nval = "";
-        if(this._isblank) return nval;
         if(this._negative) nval = "-";
         nval = nval + this._whole.toString()
         if(this._decimal > 0) {
@@ -214,7 +212,8 @@ MDecimal.prototype = {
         // Should use round to ronud
         numdec = coalesce(numdec, 2);
         var nval = "";
-        if(this._isblank) return nval;
+        if(!this.isValid()) return null;
+        if(this.isNull()) return nval;
         if(this._negative) nval = "-";
         nval = nval + this._whole.toString();
 
@@ -232,7 +231,7 @@ MDecimal.prototype = {
 
     toNumber: function()
     {
-        if(this._isblank) return null;
+        if(!this.isValue()) return null;
         var val = this._whole;
         if(this._decimal != 0) val += (this._decimal / this._tenpower(this._dlen));
         if(this._negative) val = 0.0 - val;
@@ -243,13 +242,13 @@ MDecimal.prototype = {
 
     isInt: function()
     {
-        if(this._isblank) return null;
+        if(!this.isValue()) return null;
         return this._decimal == 0;
     },
 
     intPart: function()
     {
-        if(this._isblank) return null;
+        if(!this.isValue()) return null;
         if(this._negative) {
             return 0 - this._whole;
         } else {
@@ -259,7 +258,7 @@ MDecimal.prototype = {
 
     fracPart: function()
     {
-        if(this._isblank) return null;
+        if(!this.isValue()) return null;
         if(this._deciaml == 0) return 0.0;
 
         var val = this._decimal / this._tenpower(this._dlen);
@@ -271,7 +270,7 @@ MDecimal.prototype = {
     {
         // This does floor so that rounding up
         // never occurs
-        if(this._isblank) return null;
+        if(!this.isValue()) return null;
         denom = parseInt(coalesce(denom, MDECIMAL_PENNIES));
         unit = parseInt(coalesce(unit, MDECIMAL_PENNY_UNIT));
         var ret = this._getpennies("floor", denom, unit);
@@ -309,7 +308,7 @@ MDecimal.prototype = {
 
     _setpennies: function(func, denom, unit)
     {
-        if(this._deciaml == 0) this;
+        if(!this.isValue()) return this;
         denom = parseInt(coalesce(denom, MDECIMAL_PENNIES));
         unit = parseInt(coalesce(unit, MDECIMAL_PENNY_UNIT));
 
@@ -324,6 +323,7 @@ MDecimal.prototype = {
 
     _getpennies: function(func, denom, unit)
     {
+        if(!this.isValue()) return 0;
         if(this._deciaml == 0) return 0;
 
         if(unit == 0) unit = 1;
@@ -350,7 +350,7 @@ MDecimal.prototype = {
         if(coalesce(inint, null) == null) return this;
 
         inint = parseInt(inint, 10);
-        this._isblank = false;
+        this.setNull(false);
         if(inint < 0) {
             this._whole = 0 - inint;
             this._negative = true;
@@ -367,10 +367,10 @@ MDecimal.prototype = {
 
     add: function(addval)
     {
+        if(!this.isValid()) return this;
+        if(this.isNull()) this.setZero();
         addval = mglobals.toMDecimal(addval);
-        if(addval._isblank) return this;
-
-        this._isblank = false;
+        if(!addval.isValue()) return this;
 
         if(this._negative == addval._negative) {
             this._doadd(addval);
@@ -405,6 +405,8 @@ MDecimal.prototype = {
 
     subtract: function(subval)
     {
+        if(!this.isValid()) return this;
+        if(this.isNull()) this.setZero();
         subval = mglobals.toMDecimal(subval);
         if(subval._isblank) return this;
         if(this._negative != subval._negative)
@@ -421,7 +423,7 @@ MDecimal.prototype = {
     {
         // For now, convert hsval to money
         rhsval = mglobals.toMDecimal(rhsval);
-        if(rhsval._isblank || this._isblank) return this;
+        if((!rhsval.isValue()) || (!this.isValue())) return this;
 
         if(rhsval._negative) this._negative = (!this._negative);
 
@@ -500,11 +502,11 @@ MDecimal.prototype = {
         // as if you need to divide in accounting you
         // are in trouble anyway for total acuracy
         // Simply convert everything to a float here
-        if(this._isblank) return this;
+        if(!this.isValue()) return this;
         rhsval = coalesce(rhsval, null);
         if(rhsval == null) return this;
         if (rhsval instanceof MDecimal) {
-            if (rhsval._isblank) return this;
+            if (!rhsval.isValue()) return this;
             rhsval = rhsval.toFloat();
         }
         rhsval = parseFloat(rhsval);
@@ -521,7 +523,7 @@ MDecimal.prototype = {
     {
         // Return -1, 0, 1 if this < = > rhs
         rhsval = mglobals.toMDecimal(rhsval);
-        if (this._isblank || rhsval._isblank) return null;
+        if ((!this.isValue()) || (!rhsval.isValue())) return null;
 
         var ans = 0;
         var nums = this._samedecs(this, rhsval);
@@ -695,6 +697,7 @@ MDecimal.prototype = {
     },
     _decstuff: function(func, numdecs)
     {
+        if(!this.isValue()) return;
         // Rounds the thing
         if(this._dlen > numdecs) {
             this._decimal = this._domath(func, this._decimal / this._tenpower(this._dlen - numdecs));
@@ -740,6 +743,6 @@ MDecimal.prototype = {
         // Leave this one out fo now
         // alert("ERROR in MDecimal: " + errmess);
     }
-}
+});
 
 

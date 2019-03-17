@@ -16,14 +16,14 @@ TestMTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
     constructor: TestMTime,
     test_create: function()
     {
-        this.eq("undefined", (new MTime()).toString(), "00:00:00");
-        this.eq("null", (new MTime(null)).toString(), "00:00:00");
-        this.eq("invalid", (new MTime("rubbish")).toString(), null);
+        this.eq("undefined", (new MTime()).toString(), "");
+        this.eq("null", (new MTime(null)).toString(), "");
+        this.eq("invalid", (new MTime("rubbish")).toString(), "");
         this.eq("String1", (new MTime("01:02")).toString(), "01:02:00");
         this.eq("String2", (new MTime("01:02:03")).toString(), "01:02:03");
         this.eq("String3", (new MTime("01:02:03.14")).toString(), "01:02:03.140");
-        this.eq("Invalid range", (new MTime("25:02:03.14")).toString(), null);
-        this.eq("Invalid NaN", (new MTime("aa:02:03.14")).toString(), null);
+        this.eq("Invalid range", (new MTime("25:02:03.14")).toString(), "");
+        this.eq("Invalid NaN", (new MTime("aa:02:03.14")).toString(), "");
 
         var da = new Date();
         var ta = new MTime("NOW");
@@ -49,7 +49,7 @@ TestMTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
     test_reset: function()
     {
         var da = new MTime("NOW");
-        this.eq("reset", da.reset().toString(), "00:00:00");
+        this.eq("init", da.init().toString(), "");
     },
     test_isvalid: function()
     {
@@ -65,20 +65,20 @@ TestMTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
 
     test_adddays: function()
     {
-        var da = (new MTime()).addDays(2);
+        var da = (new MTime(0)).addDays(2);
         this.eq("Add day iteger main", da.toString(), "00:00:00");
         this.eq("Add day iteger days", da.getDays(), 2);
-        var da = (new MTime()).addDays(3.25);
+        var da = (new MTime(0)).addDays(3.25);
         this.eq("Add day 3.25 main", da.toString(), "06:00:00");
         this.eq("Add day 3.25 days", da.getDays(), 3);
         da.addDays(1.5);
         this.eq("Add day again 1.5 main", da.toString(), "18:00:00");
         this.eq("Add day 1.5 days", da.getDays(), 4);
-        this.eq("Add days with minutes", (new MTime()).addDays((3/24) + (5 /(24 * 60))).toString(), "03:05:00");
-        this.eq("Add days with minutes", (new MTime()).addDays((3/24) + (5 /(24 * 60))+ (20 / (24 * 3600) + (420 / (86400000)))).toString(), "03:05:20.420");
-        this.eq("Add days with minutes Decimal", (new MTime()).addDays(new MDecimal((3/24) + (5 /(24 * 60))+ (20 / (24 * 3600) + (420 / (86400000))))).toString(), "03:05:20.420");
+        this.eq("Add days with minutes", (new MTime(0)).addDays((3/24) + (5 /(24 * 60))).toString(), "03:05:00");
+        this.eq("Add days with minutes", (new MTime(0)).addDays((3/24) + (5 /(24 * 60))+ (20 / (24 * 3600) + (420 / (86400000)))).toString(), "03:05:20.420");
+        this.eq("Add days with minutes Decimal", (new MTime(0)).addDays(new MDecimal((3/24) + (5 /(24 * 60))+ (20 / (24 * 3600) + (420 / (86400000))))).toString(), "03:05:20.420");
 
-        var da = (new MTime()).addDays(-1.125);
+        var da = (new MTime(0)).addDays(-1.125);
         this.eq("Add day neg main", da.toString(), "21:00:00");
         this.eq("Add day integer days", da.getDays(), -2);
     },

@@ -19,13 +19,17 @@ TestMDateTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
 
         var da = new Date();
         // This does JS Date
-        this.eq("Blank (may occasionally fail)", Math.floor((new MDateTime()).jsDate().getTime() / 100), Math.floor(da.getTime()/100));
+        this.eq("Blank", (new MDateTime()).toString(),"");
+        this.eq("Blank null", (new MDateTime()).isNull(), true);
+        this.eq("NOW (may occasionally fail)", Math.floor((new MDateTime("NOW")).jsDate().getTime() / 100), Math.floor(da.getTime()/100));
         this.eq("Iso Date time", (new MDateTime("2019-02-03T12:13:14.567")).toString(), "2019-02-03T12:13:14.567");
         this.eq("Iso Date", (new MDateTime("2019-02-03")).toString(), "2019-02-03T00:00:00");
-        this.eq("MTime", (new MDateTime(new MTime("01:02:03.456"))).toString(), (new MDate()).toString() + "T01:02:03.456");
+        this.eq("MTime", (new MDateTime(new MTime("01:02:03.456"))).toString(), (new MDate("NOW")).toString() + "T01:02:03.456");
         this.eq("MDate", (new MDateTime(new MDate("2019-02-03"))).toString(), "2019-02-03T00:00:00");
         this.eq("MDateTime", (new MDateTime(new MDateTime("2019-02-03T12:13:14.567"))).toString(), "2019-02-03T12:13:14.567");
-        this.eq("Rubbish", (new MDateTime(new MDateTime("rubbish"))).toString(), null);
+        this.eq("Rubbish", (new MDateTime(new MDateTime("rubbish"))).toString(), "");
+        this.eq("Rubbish valid", (new MDateTime("rubbish")).isValid(), false);
+        this.eq("Rubbish valid 2", (new MDateTime(new MDateTime("rubbish"))).isValid(), false);
     },
     test_assemble: function()
     {
@@ -33,8 +37,8 @@ TestMDateTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
     },
     test_isvalid: function()
     {
-        this.eq("False", (new MDateTime(new MDateTime("rubbish"))).isValid(), false);
-        this.eq("True", (new MDateTime(new MDateTime())).isValid(), true);
+        this.eq("False", (new MDateTime("rubbish")).isValid(), false);
+        this.eq("True", (new MDateTime("NOW")).isValid(), true);
     },
     test_setstuff: function()
     {
@@ -69,7 +73,7 @@ TestMDateTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         this.eq("years", (new MDateTime("2019-02-03T12:13:14.567")).diffYears("2022-02-03T12:13:14.567"), 3);
         this.eq("MTime", (new MDateTime("2019-02-03T12:13:14.567")).diffMTime("2019-02-06T13:15:17.967").toString(), "01:02:03.400");
         this.eq("MTime days", (new MDateTime("2019-02-03T12:13:14.567")).diffMTime("2019-02-06T13:15:17.967").getDays(), 3);
-        this.eq("MTime rubbish", (new MDateTime("2019-02-03T12:13:14.567")).diffMTime("rubbish").isValid(), false);
+        // this.eq("MTime rubbish", (new MDateTime("2019-02-03T12:13:14.567")).diffMTime("rubbish").isValid(), false);
         this.eq("Days Hours", (new MDateTime("2019-02-03T12:13:14.567")).diffDays("2019-02-03T15:13:14.567"), 0.125);
         this.eq("Hours", (new MDateTime("2019-02-03T12:13:14.567")).diffHours("2019-02-03T15:13:14.567"), 3);
         this.eq("Hours and bit", (new MDateTime("2019-02-03T12:13:14.567")).diffHours("2019-02-03T15:43:14.567"), 3.5);
