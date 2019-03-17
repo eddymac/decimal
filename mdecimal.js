@@ -7,8 +7,8 @@
 
  Release 1.00 - 5-March-2019 Initial release
  Release 1.01 - 5 March-2019 Added isValid
- 
- The Decimal object
+
+ The MDecimal object
  This assumes integers addition and subtraction are OK even if numbers are stored as floats
  IEEE 754 specification works for this up to the accuracy of the mantissa.
  The HTML5 specification states 64 bit floating points using IEEE 754 should be used.
@@ -22,8 +22,8 @@
  numbers greater than that you will start seeing inaccuracies silently
 
  Methods
- var x = new Decimal()  - Creates blank decimal objct
- var x = new Decimal(number) - Creates decimal object giving value of number
+ var x = new MDecimal()  - Creates blank decimal objct
+ var x = new MDecimal(number) - Creates decimal object giving value of number
     number can be: string, examples: "1.23" "-1.456" "3.00" "54"
                                      "" sets to null
                    javascript number (floating point)
@@ -41,16 +41,16 @@
  x.intPart()        - Returns int part of number (negative if appropriate)
  x.fracPart()       - Returns fraction part of number as fraction (negative if appropriate)
 
- Arithmatic, the "value" supplied can be string, number or Decimal (instance of this class)
+ Arithmatic, the "value" supplied can be string, number or MDecimal (instance of this class)
 
  x.add(value)       - Adds a value to object, returns current object
  x.subtract(value)  - Subtracts a value from object, returns current object
  x.multiply(value)  - Multiplies an object by value, returns current object
  x.divide(value)    - Divides an object by value, returns current object
- x.plus(value)      - Adds a value to this object and returns a new Decimal object
- x.minus(value)     - Subtracts a value from this object and returns a new Decimal object
- x.times(value)     - Multiplies a value and this object and returns a new Decimal object
- x.over(value)      - Divides the object by the value and returns a new Decimal object
+ x.plus(value)      - Adds a value to this object and returns a new MDecimal object
+ x.minus(value)     - Subtracts a value from this object and returns a new MDecimal object
+ x.times(value)     - Multiplies a value and this object and returns a new MDecimal object
+ x.over(value)      - Divides the object by the value and returns a new MDecimal object
 
  Comparisons
 
@@ -68,9 +68,9 @@
 
  x.pennies(denom, unit)
                     - Returns number of pennies,
-                      denom and unit default to DECIMAL_PENNIES and DECIMAL_PENNY_UNIT
-                      denom (DECIMAL_PENNIES) is the number of decimal places pennies use up (2 for USD)
-                      unit (DECIMAL_PENNY_UNIT) is the value of the smallest coin
+                      denom and unit default to MDECIMAL_PENNIES and MDECIMAL_PENNY_UNIT
+                      denom (MDECIMAL_PENNIES) is the number of decimal places pennies use up (2 for USD)
+                      unit (MDECIMAL_PENNY_UNIT) is the value of the smallest coin
  x.roundPennies     - Rounds the number of decimal places to nearest penny
  x.fixPennies       - Fix the number of decimal places to nearest penny (truncates)
  x.fixupPennies     - Fix ups the number of decimal places to nearest penny (always rounds to higher digit)
@@ -79,22 +79,21 @@
  */
 
 /*
- 
  * This should be set somewhere else as well
  * DEECIMAL_PENNIES is the number of decimal places for pennies (2 for USD, etc)
  *                  cannot be less then 0
  */
 
-if (typeof DECIMAL_PENNIES == "undefined") var DECIMAL_PENNIES = 2;
+if (typeof MDECIMAL_PENNIES == "undefined") var MDECIMAL_PENNIES = 2;
 
 /*
- * DECIMAL_PENNY_UNIT is the unit of penny, also can be defined elsewhere
+ * MDECIMAL_PENNY_UNIT is the unit of penny, also can be defined elsewhere
  * This is in effect the value of the smallest coin
  *
  * At time of writing, thi would be 1 for USD, or 5 for Turkish Lira etc
- * need to take into consideratuib DECIMAL_PENNIES above
+ * need to take into consideratuib MDECIMAL_PENNIES above
  */
-if (typeof DECIMAL_PENNY_UNIT == "undefined") var DECIMAL_PENNY_UNIT = 1
+if (typeof MDECIMAL_PENNY_UNIT == "undefined") var MDECIMAL_PENNY_UNIT = 1
 
 
 /*
@@ -107,26 +106,26 @@ if (typeof DECIMAL_PENNY_UNIT == "undefined") var DECIMAL_PENNY_UNIT = 1
  */
 
 // Matches 123.45, or -345.67, or +555.764
-var _DECIMAL_REGF = /^([+-]?)(\d+)\.(\d+)$/
+var _MDECIMAL_REGF = /^([+-]?)(\d+)\.(\d+)$/
 
 // Matches 1234, -6789, +9876
-var _DECIMAL_REGH = /^([+-]?)(\d+)$/
+var _MDECIMAL_REGH = /^([+-]?)(\d+)$/
 
-function Decimal(setval)
+function MDecimal(setval)
 {
     this._negative = false;                        // true if negative
     this._whole = 0;                               // Whole number as integer
-    this._decimal = 0;                             // Decimal numbver as integer
+    this._decimal = 0;                             // MDecimal numbver as integer
     this._dlen = 0;                                // Number of decimal places
     this._isblank = true;                          // True if blank
     this._isvalid = true;                          // False if invalid number entered
-    if(this.coalesce(setval, null) != null)
+    if(coalesce(setval, null) != null)
         this.setValue(setval.toString());          // Populate above
 }
 
 
-Decimal.prototype = {
-    constructor: Decimal,
+MDecimal.prototype = {
+    constructor: MDecimal,
 
     setValue: function(setval)
     {
@@ -136,10 +135,10 @@ Decimal.prototype = {
         this._dlen = 0;
         this._isblank = true;
         this._isvalid = true;
-        if (this.coalesce(setval, "") === "")
+        if (coalesce(setval, "") === "")
             return;
 
-        if(setval instanceof Decimal)
+        if(setval instanceof MDecimal)
         {
             this._negative = setval._negative;
             this._whole = setval._whole;
@@ -152,7 +151,7 @@ Decimal.prototype = {
         setval = setval.toString();
         this._isblank = false;
 
-        var mat = _DECIMAL_REGF.exec(setval);
+        var mat = _MDECIMAL_REGF.exec(setval);
         if(mat) {
             this._makefm(mat)
             var dec = mat[3];
@@ -166,7 +165,7 @@ Decimal.prototype = {
             if(this._decimal > 0)
                 this._dlen = dec.length;
         } else {
-            mat = _DECIMAL_REGH.exec(setval);
+            mat = _MDECIMAL_REGH.exec(setval);
             if(mat) {
                 this._makefm(mat)
             } else {
@@ -213,7 +212,7 @@ Decimal.prototype = {
         // prints a format of the number
         // At the moment simply concatenates (fix)
         // Should use round to ronud
-        numdec = this.coalesce(numdec, 2);
+        numdec = coalesce(numdec, 2);
         var nval = "";
         if(this._isblank) return nval;
         if(this._negative) nval = "-";
@@ -222,7 +221,7 @@ Decimal.prototype = {
         if(numdec > 0) {
             var dstr = this._decimal.toString().padStart(this._dlen, "0");
             var dslen = dstr.length;
-            if(dslen < numdec) 
+            if(dslen < numdec)
                 dstr = dstr.padEnd(numdec, '0');
             else if(dslen > numdec)
                 dstr = dstr.substring(0, numdec);
@@ -270,8 +269,11 @@ Decimal.prototype = {
 
     pennies: function(denom, unit)
     {
-        // Return pennies
+        // This does floor so that rounding up
+        // never occurs
         if(this._isblank) return null;
+        denom = parseInt(coalesce(denom, MDECIMAL_PENNIES));
+        unit = parseInt(coalesce(unit, MDECIMAL_PENNY_UNIT));
         var ret = this._getpennies("floor", denom, unit);
         if(this._negative) ret = 0 - ret;
         return ret;
@@ -279,42 +281,43 @@ Decimal.prototype = {
 
     roundPennies: function(denom, unit)
     {
-        this._decimal = this._getpennies("round", denom, unit);
-        this._dlen = denom;
-        this._simplify();
-        return this;
+        return this._setpennies("round", denom, unit);
     },
     fixPennies: function(denom, unit)
     {
-        this._decimal = this._getpennies("floor", denom, unit);
-        this._dlen = denom;
-        this._simplify();
-        return this;
+        return this._setpennies("floor", denom, unit);
     },
     fixupPennies: function(denom, unit)
     {
-        this._decimal = this._getpennies("ceil", denom, unit);
-        this._dlen = denom;
-        this._simplify();
-        return this;
+        return this._setpennies("ceil", denom, unit);
     },
     ceilPennies: function(denom, unit)
     {
         if(this._negative)
-            this._decimal = this._getpennies("floor", denom, unit);
-        else
-            this._decimal = this._getpennies("ceil", denom, unit);
-        this._dlen = denom;
-        this._simplify();
-        return this;
+            return this._setpennies("floor", denom, unit);
+        else {
+            return this._setpennies("ceil", denom, unit);
+        }
     },
     floorPennies: function(denom, unit)
     {
         if(this._negative)
-            this._decimal = this._getpennies("ceil", denom, unit);
+            return this._setpennies("ceil", denom, unit);
         else
-            this._decimal = this._getpennies("floor", denom, unit);
+            return this._setpennies("floor", denom, unit);
+    },
+
+    _setpennies: function(func, denom, unit)
+    {
+        if(this._deciaml == 0) this;
+        denom = parseInt(coalesce(denom, MDECIMAL_PENNIES));
+        unit = parseInt(coalesce(unit, MDECIMAL_PENNY_UNIT));
+
+        // Sets this up
+        this._decimal = this._getpennies(func, denom, unit);
+
         this._dlen = denom;
+        this._overdecimal();
         this._simplify();
         return this;
     },
@@ -323,8 +326,6 @@ Decimal.prototype = {
     {
         if(this._deciaml == 0) return 0;
 
-        denom = parseInt(this.coalesce(denom, DECIMAL_PENNIES));
-        unit = parseInt(this.coalesce(unit, DECIMAL_PENNY_UNIT));
         if(unit == 0) unit = 1;
 
         var ret = this._decimal;
@@ -346,7 +347,7 @@ Decimal.prototype = {
         // From an integer
         // Faster than parsing the thing
         this.setValue(null);
-        if(this.coalesce(inint, null) == null) return this;
+        if(coalesce(inint, null) == null) return this;
 
         inint = parseInt(inint, 10);
         this._isblank = false;
@@ -359,15 +360,14 @@ Decimal.prototype = {
         return this;
     },
 
-    plus: function(addval) { return (new Decimal(this)).add(addval); },
-    minus: function(subval) { return (new Decimal(this)).subtract(subval); },
-    times: function(rhsval) { return (new Decimal(this)).multiply(rhsval); },
-    over: function(rhsval) { return (new Decimal(this)).divide(rhsval); },
+    plus: function(addval) { return (new MDecimal(this)).add(addval); },
+    minus: function(subval) { return (new MDecimal(this)).subtract(subval); },
+    times: function(rhsval) { return (new MDecimal(this)).multiply(rhsval); },
+    over: function(rhsval) { return (new MDecimal(this)).divide(rhsval); },
 
     add: function(addval)
     {
-        if(!(addval instanceof Decimal))
-            addval = new Decimal(addval)
+        addval = mglobals.toMDecimal(addval);
         if(addval._isblank) return this;
 
         this._isblank = false;
@@ -405,8 +405,7 @@ Decimal.prototype = {
 
     subtract: function(subval)
     {
-        if(!(subval instanceof Decimal))
-            subval = new Decimal(subval)
+        subval = mglobals.toMDecimal(subval);
         if(subval._isblank) return this;
         if(this._negative != subval._negative)
         {
@@ -421,13 +420,11 @@ Decimal.prototype = {
     multiply: function(rhsval)
     {
         // For now, convert hsval to money
-        if(!(rhsval instanceof Decimal)) {
-            rhsval = new Decimal(rhsval);
-        }
+        rhsval = mglobals.toMDecimal(rhsval);
         if(rhsval._isblank || this._isblank) return this;
 
         if(rhsval._negative) this._negative = (!this._negative);
-        
+
         var nums = this._samedecs(this, rhsval);
 
         if (nums[2] == 0) { // Rest should be 0 too
@@ -493,7 +490,7 @@ Decimal.prototype = {
         this._dlen = dlen;
         this._simplify();
         return this;
-        
+
     },
 
     divide: function(rhsval)
@@ -504,15 +501,15 @@ Decimal.prototype = {
         // are in trouble anyway for total acuracy
         // Simply convert everything to a float here
         if(this._isblank) return this;
-        rhsval = this.coalesce(rhsval, null);
+        rhsval = coalesce(rhsval, null);
         if(rhsval == null) return this;
-        if (rhsval instanceof Decimal) {
+        if (rhsval instanceof MDecimal) {
             if (rhsval._isblank) return this;
             rhsval = rhsval.toFloat();
         }
         rhsval = parseFloat(rhsval);
         var lhsval = this.toFloat();
-        if(this.coalesce(rhsval, 0) == 0) {
+        if(coalesce(rhsval, 0) == 0) {
             this.setValue(null);
         } else {
             this.setValue(lhsval / rhsval);
@@ -523,9 +520,7 @@ Decimal.prototype = {
     cmp: function(rhsval)
     {
         // Return -1, 0, 1 if this < = > rhs
-        if(!(rhsval instanceof Decimal)) {
-            rhsval = new Decimal(rhsval);
-        }
+        rhsval = mglobals.toMDecimal(rhsval);
         if (this._isblank || rhsval._isblank) return null;
 
         var ans = 0;
@@ -689,7 +684,7 @@ Decimal.prototype = {
         else
             this._decstuff("ceil", numdecs);
         return this;
-    },  
+    },
     floor: function(numdecs)
     {
         if(this._negative)
@@ -697,14 +692,25 @@ Decimal.prototype = {
         else
             this._decstuff("floor", numdecs);
         return this;
-    },  
+    },
     _decstuff: function(func, numdecs)
     {
         // Rounds the thing
         if(this._dlen > numdecs) {
             this._decimal = this._domath(func, this._decimal / this._tenpower(this._dlen - numdecs));
             this._dlen = numdecs;
+            this._overdecimal();
+
             this._simplify();
+        }
+    },
+
+    _overdecimal: function()
+    {
+        var seepow = this._tenpower(this._dlen);
+        while(this._decimal >= seepow) {
+            this._decimal -= seepow;
+            this._whole += 1;
         }
     },
 
@@ -717,6 +723,7 @@ Decimal.prototype = {
         }
     },
 
+
     coalesce: function(see, def)
     {
         if(see === 0 || see === "0" || see === false) return see;
@@ -728,10 +735,10 @@ Decimal.prototype = {
 
     doerror: function(errmess)
     {
-        console.log("ERROR in Decimal: " + errmess);
+        console.log("ERROR in MDecimal: " + errmess);
         console.trace();
         // Leave this one out fo now
-        // alert("ERROR in Decimal: " + errmess);
+        // alert("ERROR in MDecimal: " + errmess);
     }
 }
 
