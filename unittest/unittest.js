@@ -10,14 +10,14 @@
  var TestMDecimal = function() {UnitTest.call(this); };
  TestMDecimal.prototype  = Object.assign(Object.create(UnitTest.prototype), {
      constructor: TestMDecimal,
-     test_create: function(undef)
+     test_create(undef)
      {
          var x = new MDecimal();
          this.eq("Blank", x.toString(), "");
          x = new MDecimal(null);
          this.eq("Null", x.toString(), "");
          this.eq("Null test", x.isValid(), true);
-     },
+     }
      etc
 
  });
@@ -54,26 +54,25 @@
 
  */
 
-function UnitTest()
-{
-    this._numtest = 0;
-    this._numpass = 0;
-    this._numfail = 0;
-    this._testlist = [];
-    this._faillist = [];
-    this._basedesc = "";
-}
-
-UnitTest.prototype = {
-    constructor: UnitTest,
-    run: function()
+class UnitTest {
+    constructor()
     {
         this._numtest = 0;
         this._numpass = 0;
         this._numfail = 0;
         this._testlist = [];
         this._faillist = [];
-        for (var fname in this) {
+        this._basedesc = "";
+    }
+
+    run()
+    {
+        this._numtest = 0;
+        this._numpass = 0;
+        this._numfail = 0;
+        this._testlist = [];
+        this._faillist = [];
+        Object.getOwnPropertyNames(Object.getPrototypeOf(this)).forEach((fname, idx, arr) => {
             if(fname.substring(0, 5) == "test_") {
                 this._basedesc = "Test " + fname.substring(5);
                 try {
@@ -91,61 +90,61 @@ UnitTest.prototype = {
                     this._faillist.push(this._basedesc + ". " + fname + " ERROR " + err.toString());
                 }
             }
-        }
-    },
+        });
+    }
 
-    eq: function(descr, lhs, rhs)
+    eq(descr, lhs, rhs)
     {
         var cond = false;
         if(lhs === rhs)
             cond = true;
         this._proccond(descr, cond, "===", lhs, rhs);
         return cond;
-    },
+    }
 
-    gt: function(descr, lhs, rhs)
+    gt(descr, lhs, rhs)
     {
         var cond = false;
         if(lhs > rhs)
             cond = true;
         this._proccond(descr, cond, ">", lhs, rhs);
         return cond;
-    },
-    lt: function(descr, lhs, rhs)
+    }
+    lt(descr, lhs, rhs)
     {
         var cond = false;
         if(lhs < rhs)
             cond = true;
         this._proccond(descr, cond, "<", lhs, rhs);
         return cond;
-    },
-    ne: function(descr, lhs, rhs)
+    }
+    ne(descr, lhs, rhs)
     {
         var cond = true;
         if(lhs === rhs)
             cond = false;
         this._proccond(descr, cond, "!=", lhs, rhs);
         return cond;
-    },
+    }
 
-    ge: function(descr, lhs, rhs)
+    ge(descr, lhs, rhs)
     {
         var cond = false;
         if(lhs >= rhs)
             cond = true;
         this._proccond(descr, cond, ">=", lhs, rhs);
         return cond;
-    },
-    le: function(descr, lhs, rhs)
+    }
+    le(descr, lhs, rhs)
     {
         var cond = false;
         if(lhs <= rhs)
             cond = true;
         this._proccond(descr, cond, "<=", lhs, rhs);
         return cond;
-    },
+    }
 
-    _proccond: function(descr, cond, fstr, lhs, rhs)
+    _proccond(descr, cond, fstr, lhs, rhs)
     {
         var faildesc = "";
         this._numtest += 1;
@@ -173,14 +172,14 @@ UnitTest.prototype = {
         }
         this._testlist.push([passed, okdesc + ": " + this._basedesc + ". " + descr + faildesc]);
         return cond;
-    },
+    }
 
-    clearresults: function()
+    clearresults()
     {
         var ele  = document.getElementById("testresults");
         ele.innerHTML = "";
-    },
-    displayresults: function()
+    }
+    displayresults()
     {
         var ele  = document.getElementById("testresults");
 
@@ -215,9 +214,9 @@ UnitTest.prototype = {
         }
 
         ele.appendChild(this._doele("table", null, "", oeles));
-    },
+    }
 
-    _tostring: function(inp)
+    _tostring(inp)
     {
         if(typeof inp == "undefined")
             return "undefined";
@@ -227,9 +226,9 @@ UnitTest.prototype = {
             return "object";
         else
             return inp.toString();
-    },
+    }
 
-    _doele: function(etype, eatts, etext, children, etail)
+    _doele(etype, eatts, etext, children, etail)
     {
         // Helper for creatin elements
         // args:
@@ -268,3 +267,5 @@ UnitTest.prototype = {
     }
 }
 
+
+export {UnitTest};

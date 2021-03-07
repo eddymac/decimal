@@ -9,6 +9,8 @@ NOTE - "mutilities.js" is the ID of the pckage.  There is no file named that.
 Version
 ~~~~~~~
 
+Version 3.0 - 7 March 2021  - Updating it to use classes and modules.
+
 Version 2.1 - 28 march 2017 - Enable MDateTime stuff to have null values
                               Added MUtilBase for everything to facilitate
                               simpler API in practice
@@ -21,7 +23,7 @@ Notes
 ~~~~~
 
 Following files are included:
-    mglobals.js     - Some global functions used throughout
+    mutilbase.js    - Some global functions used throughout
     mdecimal.js     - To provide the MDecimal class object
     mdatetime.js    - To provide the MDate, MDateTime and Mtime class objects
 

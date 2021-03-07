@@ -11,10 +11,12 @@
 // alert = function (arg) {alertmess = arg; }
 // End of mocks
 
-var TestMDecimal = function() {UnitTest.call(this); };
-TestMDecimal.prototype  = Object.assign(Object.create(UnitTest.prototype), {
-    constructor: TestMDecimal,
-    test_create: function(undef)
+import {UnitTest} from "./unittest.js";
+import {MDate, MTime, MDateTime} from "../mdatetime.js";
+import {MDecimal} from "../mdecimal.js";
+
+class TestMDecimal extends UnitTest {
+    test_create(undef)
     {
         // Test for new blank
         var x = new MDecimal();
@@ -58,16 +60,16 @@ TestMDecimal.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         this.eq("positive Int string", x.toString(), "987");
         x = new MDecimal(new MDecimal("1234.567"));
         this.eq("Decimal", x.toString(), "1234.567");
-    },
-    test_isNull: function()
+    }
+    test_isNull()
     {
         this.eq("Is Null", (new MDecimal()).isNull(), true);
         this.eq("Is Not Null", (new MDecimal("34.56")).isNull(), false);
-    },
+    }
 
     // toString tested in test-create
 
-    test_format: function()
+    test_format()
     {
         this.eq("Null", (new MDecimal()).format(3), "");
         this.eq("Int", (new MDecimal("123")).format(3), "123.000");
@@ -78,47 +80,47 @@ TestMDecimal.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         this.eq("Known Error", (new MDecimal("132.01")).format(2), "132.01");
         this.eq("Known Error 2", (new MDecimal("132.0123")).format(2), "132.01");
         this.eq("Known Error 3", (new MDecimal("-132.0123")).format(2), "-132.01");
-    },
+    }
 
-    test_toNumber: function()
+    test_toNumber()
     {
         this.eq("Positive int", (new MDecimal("123")).toNumber(), 123);
         this.eq("Negative int", (new MDecimal("-456")).toNumber(), -456);
         this.eq("Positive float", (new MDecimal("123.321")).toNumber(), 123.321);
         this.eq("Negative float", (new MDecimal("-456.789")).toNumber(), -456.789);
         this.eq("Blank", (new MDecimal(null)).toNumber(), null);
-    },
+    }
 
-    test_toFloat: function()
+    test_toFloat()
     {
         // Same as toNumber
         this.eq("Positive int", (new MDecimal("123")).toFloat(), 123);
-    },
+    }
 
-    test_isInt: function()
+    test_isInt()
     {
         this.eq("True", (new MDecimal("123")).isInt(), true);
         this.eq("False", (new MDecimal("123.45")).isInt(), false);
         this.eq("Null", (new MDecimal(null)).isInt(), null);
-    },
+    }
 
-    test_intPart: function()
+    test_intPart()
     {
         this.eq("Null", (new MDecimal(null)).intPart(), null);
         this.eq("Positive", (new MDecimal("123.456")).intPart(), 123);
         this.eq("Negative", (new MDecimal("-8123.456")).intPart(), -8123);
-    },
+    }
 
-    test_pennies: function()
+    test_pennies()
     {
         this.eq("Null", (new MDecimal(null)).pennies(2, 1), null);
         this.eq("Default", (new MDecimal("1234.5678")).pennies(), 56);
         this.eq("Halfpennies", (new MDecimal("1234.5678")).pennies(3, 5), 565);
         this.eq("Negaitve", (new MDecimal("-1234.5678")).pennies(), -56);
         this.eq("Padout", (new MDecimal("1234.5")).pennies(), 50);
-    },
+    }
 
-    test_decpennies: function()
+    test_decpennies()
     {
         this.eq("Round", (new MDecimal("123.456")).roundPennies().toString(), "123.46");
         this.eq("Ceil", (new MDecimal("123.456")).ceilPennies().toString(), "123.46");
@@ -128,17 +130,17 @@ TestMDecimal.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         this.eq("Floor", (new MDecimal("-123.456")).floorPennies().toString(), "-123.46");
         this.eq("Fix", (new MDecimal("123.456")).fixPennies().toString(), "123.45");
         this.eq("Fixup", (new MDecimal("123.456")).fixupPennies().toString(), "123.46");
-    },
+    }
 
-    test_fromint: function()
+    test_fromint()
     {
         this.eq("Null", (new MDecimal(null)).fromInt(null).toString(), "");
         this.eq("Positive", (new MDecimal()).fromInt(123).toString(), "123");
         this.eq("Negative", (new MDecimal()).fromInt(-123).toString(), "-123");
         this.eq("Truncate", (new MDecimal()).fromInt(123.456).toString(), "123");
-    },
+    }
 
-    test_add: function()
+    test_add()
     {
         self = this;
         function seeadd(descr, x, y, ans)
@@ -153,9 +155,9 @@ TestMDecimal.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         seeadd("Carryneg", "6.12", "-1.23", "4.89");
         seeadd("Carrynegneg", "-6.12", "1.23", "-4.89");
         this.eq("Add Dec to Dec", (new MDecimal(12.3)).add(new MDecimal(45.6)).toString(), "57.9");
-    },
+    }
 
-    test_subtract: function()
+    test_subtract()
     {
         self = this;
         function seesubtract(descr, x, y, ans)
@@ -172,9 +174,9 @@ TestMDecimal.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         seesubtract("Carry", "6.12", "1.23", "4.89");
         seesubtract("Carry Neg Neg", "-6.12", "-1.23", "-4.89");
         this.eq("See MDecimal", (new MDecimal(44.4).subtract(new MDecimal(11.1))).toString(), "33.3");
-    },
+    }
 
-    test_multiply: function()
+    test_multiply()
     {
         self = this;
         function seemult(descr, x, y, ans)
@@ -200,9 +202,9 @@ TestMDecimal.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         seemult("Negs Both", "-1.2", "-1.3", "1.56");
         seemult("Blank", "", "66", "");
         this.eq("mult Dec to Dec", (new MDecimal(12.3)).multiply(new MDecimal(3)).toString(), "36.9");
-    },
+    }
 
-    test_divide: function()
+    test_divide()
     {
         self = this;
         function seediv(descr, x, y, ans)
@@ -214,9 +216,9 @@ TestMDecimal.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         seediv("By Zero", "7.3", "0", "");
         seediv("From Zero", "0", "1.23", "0");
         this.eq("div Dec by Dec", (new MDecimal(72)).divide(new MDecimal(6)).toString(), "12");
-    },
+    }
 
-    test_cmp: function()
+    test_cmp()
     {
         this.eq("Blank", (new MDecimal(12.3)).cmp(null), null);
         this.eq("equal", (new MDecimal(12.3)).cmp(12.3), 0);
@@ -228,9 +230,9 @@ TestMDecimal.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         this.eq("lhs negative", (new MDecimal(-13.3)).cmp(12.1), -1);
         this.eq("both negative", (new MDecimal(-11.3)).cmp(-12.1), 1);
         this.eq("both negative", (new MDecimal(-11.3)).cmp(-10.1), -1);
-    },
+    }
 
-    test_comparisons: function()
+    test_comparisons()
     {
         this.eq("gt", (new MDecimal(12.5)).gt(12.4), true)
         this.eq("not gt", (new MDecimal(12.5)).gt(12.6), false)
@@ -238,9 +240,9 @@ TestMDecimal.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         this.eq("not lt", (new MDecimal(11.6)).lt(11.4), false);
         this.eq("eq", (new MDecimal(11.3)).eq(11.3), true);
         this.eq("not eq", (new MDecimal(11.6)).eq(12.4), false);
-    },
+    }
 
-    test_decplaces: function()
+    test_decplaces()
     {
         this.eq("Round up", (new MDecimal(12.346)).round(2).toString(), "12.35")
         this.eq("Round 0 places", (new MDecimal(12.346)).round(0).toString(), "12")
@@ -256,9 +258,9 @@ TestMDecimal.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         this.eq("ceil neg", (new MDecimal(-12.346)).ceil(2).toString(), "-12.34")
         this.eq("floor", (new MDecimal(12.346)).floor(2).toString(), "12.34")
         this.eq("floor neg", (new MDecimal(-12.346)).floor(2).toString(), "-12.35")
-    },
+    }
 
-    test_arithmatic: function()
+    test_arithmatic()
     {
         this.eq("plus", (new MDecimal(1.23)).plus(2.34).toString(), "3.57");
         this.eq("minus", (new MDecimal(1.23)).minus(2.34).toString(), "-1.11");
@@ -268,9 +270,9 @@ TestMDecimal.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         // An obvious one to test for
 
         this.eq("Does not work for float", (new MDecimal(23)).minus(7.37).toString(), "15.63");
-    },
+    }
 
-    test_parts: function()
+    test_parts()
     {
         this.eq("int", (new MDecimal(1.23)).intPart(), 1);
         this.eq("frac", (new MDecimal(1.23)).fracPart(), 0.23);
@@ -278,7 +280,7 @@ TestMDecimal.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         this.eq("frac neg", (new MDecimal(-1.23)).fracPart(), -0.23);
     }
 
-});
+}
 
 
 function dounittest()
@@ -288,3 +290,5 @@ function dounittest()
     ut.run();
     ut.displayresults();
 }
+
+window.dounittest = dounittest;

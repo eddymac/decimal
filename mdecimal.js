@@ -100,6 +100,12 @@ if (typeof MDECIMAL_PENNY_UNIT == "undefined") var MDECIMAL_PENNY_UNIT = 1
  *  END OF INTRODUCTION AND USER SETTINGS
  */
 
+/*
+ * Import...
+ */
+
+import {MUtilBase, coalesce} from "./mutilbase.js";
+
 
 /*
  * Private static regular expressions
@@ -111,22 +117,27 @@ var _MDECIMAL_REGF = /^([+-]?)(\d+)\.(\d+)$/
 // Matches 1234, -6789, +9876
 var _MDECIMAL_REGH = /^([+-]?)(\d+)$/
 
-function MDecimal(setval)
-{
-    MUtilBase.call(this);
-    this._negative = false;                        // true if negative
-    this._whole = 0;                               // Whole number as integer
-    this._decimal = 0;                             // MDecimal numbver as integer
-    this._dlen = 0;                                // Number of decimal places
-    if(coalesce(setval, null) != null)
-        this.setValue(setval.toString());          // Populate above
-}
+class MDecimal extends MUtilBase {
+    constructor(setval)
+    {
+        super();
+        this._negative = false;                        // true if negative
+        this._whole = 0;                               // Whole number as integer
+        this._decimal = 0;                             // MDecimal numbver as integer
+        this._dlen = 0;                                // Number of decimal places
+        if(coalesce(setval, null) != null)
+            this.setValue(setval);          // Populate above
+    }
 
+    static toMDecimal(inp)
+    {
+        if(inp instanceof MDecimal)
+            return inp;
+        else
+            return new MDecimal(inp);
+    }
 
-MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
-    constructor: MDecimal,
-
-    setValue: function(setval)
+    setValue(setval)
     {
         this.reset();
         this._negative = false;
@@ -174,9 +185,9 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
         }
         this._simplify();
         return this;
-    },
+   }
 
-    setZero: function()
+    setZero()
     {
         this.reset();
         this._negative = false;
@@ -185,9 +196,9 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
         this._dlen = 0;
         this.setNull(false);
         return this;
-    },
+    }
 
-    derToString: function()
+    derToString()
     {
         var nval = "";
         if(this._negative) nval = "-";
@@ -203,9 +214,9 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
             nval = nval + "." + dstr;
         }
         return nval;
-    },
+    }
 
-    format: function(numdec)
+    format(numdec)
     {
         // prints a format of the number
         // At the moment simply concatenates (fix)
@@ -227,26 +238,26 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
             nval = nval + "." + dstr;
         }
         return nval;
-    },
+    }
 
-    toNumber: function()
+    toNumber()
     {
         if(!this.isValue()) return null;
         var val = this._whole;
         if(this._decimal != 0) val += (this._decimal / this._tenpower(this._dlen));
         if(this._negative) val = 0.0 - val;
         return val;
-    },
+    }
 
-    toFloat: function() {return this.toNumber(); },
+    toFloat() {return this.toNumber(); }
 
-    isInt: function()
+    isInt()
     {
         if(!this.isValue()) return null;
         return this._decimal == 0;
-    },
+    }
 
-    intPart: function()
+    intPart()
     {
         if(!this.isValue()) return null;
         if(this._negative) {
@@ -254,9 +265,9 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
         } else {
             return this._whole;
         }
-    },
+    }
 
-    fracPart: function()
+    fracPart()
     {
         if(!this.isValue()) return null;
         if(this._deciaml == 0) return 0.0;
@@ -264,9 +275,9 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
         var val = this._decimal / this._tenpower(this._dlen);
         if(this._negative) val = 0 - val;
         return val;
-    },
+    }
 
-    pennies: function(denom, unit)
+    pennies(denom, unit)
     {
         // This does floor so that rounding up
         // never occurs
@@ -276,37 +287,37 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
         var ret = this._getpennies("floor", denom, unit);
         if(this._negative) ret = 0 - ret;
         return ret;
-    },
+    }
 
-    roundPennies: function(denom, unit)
+    roundPennies(denom, unit)
     {
         return this._setpennies("round", denom, unit);
-    },
-    fixPennies: function(denom, unit)
+    }
+    fixPennies(denom, unit)
     {
         return this._setpennies("floor", denom, unit);
-    },
-    fixupPennies: function(denom, unit)
+    }
+    fixupPennies(denom, unit)
     {
         return this._setpennies("ceil", denom, unit);
-    },
-    ceilPennies: function(denom, unit)
+    }
+    ceilPennies(denom, unit)
     {
         if(this._negative)
             return this._setpennies("floor", denom, unit);
         else {
             return this._setpennies("ceil", denom, unit);
         }
-    },
-    floorPennies: function(denom, unit)
+    }
+    floorPennies(denom, unit)
     {
         if(this._negative)
             return this._setpennies("ceil", denom, unit);
         else
             return this._setpennies("floor", denom, unit);
-    },
+    }
 
-    _setpennies: function(func, denom, unit)
+    _setpennies(func, denom, unit)
     {
         if(!this.isValue()) return this;
         denom = parseInt(coalesce(denom, MDECIMAL_PENNIES));
@@ -319,9 +330,9 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
         this._overdecimal();
         this._simplify();
         return this;
-    },
+    }
 
-    _getpennies: function(func, denom, unit)
+    _getpennies(func, denom, unit)
     {
         if(!this.isValue()) return 0;
         if(this._deciaml == 0) return 0;
@@ -340,9 +351,9 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
             ret = this._domath(func, ret / unit) * unit;
         }
         return ret;
-    },
+    }
 
-    fromInt: function(inint)
+    fromInt(inint)
     {
         // From an integer
         // Faster than parsing the thing
@@ -358,18 +369,18 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
             this._whole = inint;
         }
         return this;
-    },
+    }
 
-    plus: function(addval) { return (new MDecimal(this)).add(addval); },
-    minus: function(subval) { return (new MDecimal(this)).subtract(subval); },
-    times: function(rhsval) { return (new MDecimal(this)).multiply(rhsval); },
-    over: function(rhsval) { return (new MDecimal(this)).divide(rhsval); },
+    plus(addval) { return (new MDecimal(this)).add(addval); }
+    minus(subval) { return (new MDecimal(this)).subtract(subval); }
+    times(rhsval) { return (new MDecimal(this)).multiply(rhsval); }
+    over(rhsval) { return (new MDecimal(this)).divide(rhsval); }
 
-    add: function(addval)
+    add(addval)
     {
         if(!this.isValid()) return this;
         if(this.isNull()) this.setZero();
-        addval = mglobals.toMDecimal(addval);
+        addval = MDecimal.toMDecimal(addval);
         if(!addval.isValue()) return this;
 
         if(this._negative == addval._negative) {
@@ -381,8 +392,8 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
             }
         }
         return this;
-    },
-    _doadd: function(addval)
+    }
+    _doadd(addval)
     {
         this._whole = this._whole + addval._whole;
 
@@ -401,13 +412,13 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
             this._dlen = 0;
         else
             this._dlen = dlen;
-    },
+    }
 
-    subtract: function(subval)
+    subtract(subval)
     {
         if(!this.isValid()) return this;
         if(this.isNull()) this.setZero();
-        subval = mglobals.toMDecimal(subval);
+        subval = MDecimal.toMDecimal(subval);
         if(subval._isblank) return this;
         if(this._negative != subval._negative)
         {
@@ -417,12 +428,12 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
            if(mkneg) this._negative = (!this._negative);
         }
         return this;
-    },
+    }
 
-    multiply: function(rhsval)
+    multiply(rhsval)
     {
         // For now, convert hsval to money
-        rhsval = mglobals.toMDecimal(rhsval);
+        rhsval = MDecimal.toMDecimal(rhsval);
         if((!rhsval.isValue()) || (!this.isValue())) return this;
 
         if(rhsval._negative) this._negative = (!this._negative);
@@ -493,9 +504,9 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
         this._simplify();
         return this;
 
-    },
+    }
 
-    divide: function(rhsval)
+    divide(rhsval)
     {
         // Divide is more difficult
         // and I question it's usefulness
@@ -517,12 +528,12 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
             this.setValue(lhsval / rhsval);
         }
         return this;
-    },
+    }
 
-    cmp: function(rhsval)
+    cmp(rhsval)
     {
         // Return -1, 0, 1 if this < = > rhs
-        rhsval = mglobals.toMDecimal(rhsval);
+        rhsval = MDecimal.toMDecimal(rhsval);
         if ((!this.isValue()) || (!rhsval.isValue())) return null;
 
         var ans = 0;
@@ -549,13 +560,13 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
             else if (ans == -1) ans = 1;
         }
         return ans;
-    },
+    }
 
-    gt: function(rhs) {return this.cmp(rhs) == 1},
-    lt: function(rhs) {return this.cmp(rhs) == -1},
-    eq: function(rhs) {return this.cmp(rhs) == 0},
+    gt(rhs) {return this.cmp(rhs) == 1}
+    lt(rhs) {return this.cmp(rhs) == -1}
+    eq(rhs) {return this.cmp(rhs) == 0}
 
-    _dosubtract: function(subval)
+    _dosubtract(subval)
     {
         var mkneg = false;
         var nums = this._samedecs(this, subval);
@@ -584,9 +595,9 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
         this._decimal = ans[1];
         this._dlen = nums[2];
         return mkneg;
-    },
+    }
 
-    _doactsub: function(lval, ldec, rval, rdec, dlen)
+    _doactsub(lval, ldec, rval, rdec, dlen)
     {
         // Actual subtraction
         // LHS should be larger then RHS here
@@ -597,29 +608,29 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
             lval -= 1;
         }
         return [lval, ldec];
-    },
+    }
 
 
-    _makefm: function(mat)
+    _makefm(mat)
     {
         if (mat[1] == "-")
             this._negative = true;
 
         if (mat[2] != "")
             this._whole = parseInt(mat[2]);
-    },
+    }
 
 
-    _seezero: function()
+    _seezero()
     {
         if(this._negative) {
             if(this._whole == 0 && this._decimal == 0)
                 this._negative = false;
         }
         if(this._decimal == 0) this._dlen = 0;
-    },
+    }
 
-    _tenpower: function(num)
+    _tenpower(num)
     {
         // 10 ^^ number
         // Not using "pow" because I want to guarantee integer
@@ -627,9 +638,9 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
         var ans = 1;
         for(;num;num--) ans = ans * 10;
         return ans;
-    },
+    }
 
-    _samedecs: function(lhs, rhs)
+    _samedecs(lhs, rhs)
     {
         // Makes the decimal lengths the same
         // Returns lhs dec value, rhs dec value, dec length
@@ -659,9 +670,9 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
             }
         }
         return [ldec, rdec, ldl];
-    },
+    }
 
-    _simplify: function()
+    _simplify()
     {
         // Minimizes value of dlen
         if(this._decimal == 0) {
@@ -674,28 +685,28 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
             this._decimal = this._decimal / 10;
             this._dlen -= 1;
         }
-    },
+    }
 
-    round: function(numdecs) { this._decstuff("round", numdecs); return this;},
-    fix: function(numdecs) { this._decstuff("floor", numdecs); return this;},
-    fixup: function(numdecs) { this._decstuff("ceil", numdecs); return this;},
-    ceil: function(numdecs)
+    round(numdecs) { this._decstuff("round", numdecs); return this;}
+    fix(numdecs) { this._decstuff("floor", numdecs); return this;}
+    fixup(numdecs) { this._decstuff("ceil", numdecs); return this;}
+    ceil(numdecs)
     {
         if(this._negative)
             this._decstuff("floor", numdecs);
         else
             this._decstuff("ceil", numdecs);
         return this;
-    },
-    floor: function(numdecs)
+    }
+    floor(numdecs)
     {
         if(this._negative)
             this._decstuff("ceil", numdecs);
         else
             this._decstuff("floor", numdecs);
         return this;
-    },
-    _decstuff: function(func, numdecs)
+    }
+    _decstuff(func, numdecs)
     {
         if(!this.isValue()) return;
         // Rounds the thing
@@ -706,43 +717,45 @@ MDecimal.prototype = Object.assign(Object.create(MUtilBase.prototype), {
 
             this._simplify();
         }
-    },
+    }
 
-    _overdecimal: function()
+    _overdecimal()
     {
         var seepow = this._tenpower(this._dlen);
         while(this._decimal >= seepow) {
             this._decimal -= seepow;
             this._whole += 1;
         }
-    },
+    }
 
-    _domath: function(func, expr)
+    _domath(func, expr)
     {
         switch(func) {
         case "ceil": return Math.ceil(expr); break;
         case "floor": return Math.floor(expr); break;
         case "round": return Math.round(expr); break;
         }
-    },
+    }
 
 
-    coalesce: function(see, def)
+    /*
+    coalesce(see, def)
     {
         if(see === 0 || see === "0" || see === false) return see;
         if(typeof see == 'undefined' || see === null)
             return def;
         else
             return see;
-    },
+    }
+     */
 
-    doerror: function(errmess)
+    doerror(errmess)
     {
         console.log("ERROR in MDecimal: " + errmess);
         console.trace();
         // Leave this one out fo now
         // alert("ERROR in MDecimal: " + errmess);
     }
-});
+}
 
-
+export {MDecimal};

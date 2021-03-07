@@ -11,10 +11,12 @@
 // alert = function (arg) {alertmess = arg; }
 // End of mocks
 
-var TestMTime = function() {UnitTest.call(this); };
-TestMTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
-    constructor: TestMTime,
-    test_create: function()
+import {UnitTest} from "./unittest.js";
+import {MDate, MTime, MDateTime} from "../mdatetime.js";
+import {MDecimal} from "../mdecimal.js";
+
+class TestMTimeextends UnitTest {
+    test_create()
     {
         this.eq("undefined", (new MTime()).toString(), "");
         this.eq("null", (new MTime(null)).toString(), "");
@@ -37,33 +39,33 @@ TestMTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         
 
 
-    },
-    test_now: function()
+    }
+    test_now()
     {
         this.eq("Now function", (new MTime()).now().toString().substring(0, 8), (new MTime("NOW")).toString().substring(0, 8));
-    },
+    }
     test_assemble()
     {
         this.eq("Assemble", (new MTime()).assemble(1, 2, 73, 45).toString(), "01:03:13.045");
-    },
-    test_reset: function()
+    }
+    test_reset()
     {
         var da = new MTime("NOW");
         this.eq("init", da.init().toString(), "");
-    },
-    test_isvalid: function()
+    }
+    test_isvalid()
     {
         this.eq("Valid", (new MTime()).isValid(), true);
         this.eq("Not Valid", (new MTime("rubbish")).isValid(), false);
-    },
-    test_truncate: function()
+    }
+    test_truncate()
     {
         var da = new MTime("01:02:03.456");
         this.ne("Not trunc", da.getMilliseconds(), 0);
         this.eq("Trunc", da.truncate().getMilliseconds(), 0);
-    },
+    }
 
-    test_adddays: function()
+    test_adddays()
     {
         var da = (new MTime(0)).addDays(2);
         this.eq("Add day iteger main", da.toString(), "00:00:00");
@@ -81,8 +83,8 @@ TestMTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         var da = (new MTime(0)).addDays(-1.125);
         this.eq("Add day neg main", da.toString(), "21:00:00");
         this.eq("Add day integer days", da.getDays(), -2);
-    },
-    test_addhours: function()
+    }
+    test_addhours()
     {
         this.eq("Add hours int", (new MTime("01:02:03")).addHours(3).toString(), "04:02:03");
         this.eq("Add hours big int", (new MTime("06:02:03")).addHours(23).toString(), "05:02:03");
@@ -90,41 +92,41 @@ TestMTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         this.eq("Add hours big int days", (new MTime("06:02:03")).addHours(23).getDays(), 1);
         this.eq("Add hours neg", (new MTime("01:02:03")).addHours(-3).toString(), "22:02:03");
         this.eq("Add hours neg days", (new MTime("01:02:03")).addHours(-3).getDays(), -1);
-    },
-    test_addminutes: function()
+    }
+    test_addminutes()
     {
         this.eq("Add minutes", (new MTime("01:02:03")).addMinutes(20).toString(), "01:22:03");
         this.eq("Add minutes Decimal", (new MTime("01:02:03")).addMinutes(new MDecimal(20)).toString(), "01:22:03");
         this.eq("Add big minutes", (new MTime("01:02:03")).addMinutes(100).toString(), "02:42:03");
-    },
-    test_addseconds: function()
+    }
+    test_addseconds()
     {
         this.eq("Add seconds", (new MTime("01:02:03")).addSeconds(20).toString(), "01:02:23");
         this.eq("Add seconds Decimal", (new MTime("01:02:03")).addSeconds(new MDecimal(20)).toString(), "01:02:23");
         this.eq("Add big seconds", (new MTime("01:02:03")).addSeconds(100).toString(), "01:03:43");
-    },
-    test_addmillis: function()
+    }
+    test_addmillis()
     {
         this.eq("Add Millis", (new MTime("01:02:03")).addMilliseconds(20).toString(), "01:02:03.020");
         this.eq("Add millis Decimal", (new MTime("01:02:03")).addMilliseconds(new MDecimal(20)).toString(), "01:02:03.020");
         this.eq("Add big millis", (new MTime("01:02:03")).addMilliseconds(1234).toString(), "01:02:04.234");
         this.eq("Add neg millis", (new MTime("01:02:03")).addMilliseconds(-20).toString(), "01:02:02.980");
-    },
-    test_diffmtime: function()
+    }
+    test_diffmtime()
     {
         this.eq("Diff time", (new MTime("10:11:12.555")).diffMTime("16:01:01.1").toString(), "05:49:48.545");
         this.eq("Diff time days", (new MTime("10:11:12.555")).diffMTime("16:01:01.1").getDays(), 0);
         this.eq("Diff time neg", (new MTime("10:11:12.555")).diffMTime("04:01:01.1").toString(), "17:49:48.545");
         this.eq("Diff time neg days", (new MTime("10:11:12.555")).diffMTime("04:01:01.1").getDays(), -1);
-    },
-    test_diffdays: function()
+    }
+    test_diffdays()
     {
         this.eq("Diff days", (new MTime("01:02:03")).diffDays((new MTime("01:02:03")).addDays(4)), 4);
         this.eq("Diff days hours", (new MTime("01:02:03")).diffDays((new MTime("13:02:03")).addDays(4)), 4.5);
         this.eq("Diff days seconds", (new MTime("01:02:03")).diffDays((new MTime("15:40:27")).addDays(4)), 4.61);
         this.eq("Diff days millis", (new MTime("01:02:03")).diffDays((new MTime("15:41:53.4")).addDays(4)), 4.611);
-    },
-    test_diffhours: function()
+    }
+    test_diffhours()
     {
         this.eq("Diff hours", (new MTime("01:02:03")).diffHours("01:02:03"), 0);
         this.eq("Diff hours hours", (new MTime("01:02:03")).diffHours("13:02:03"), 12);
@@ -134,8 +136,8 @@ TestMTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         this.eq("Diff hours with days hours", (new MTime("01:02:03")).diffHours((new MTime("13:02:03")).addDays(4)), 108);
         this.eq("Diff hours with days seconds", (new MTime("01:02:03")).diffHours((new MTime("15:40:27")).addDays(4)), 110.64);
         this.eq("Diff hours with days millis", (new MTime("01:02:03")).diffHours((new MTime("15:41:53.4")).addDays(4)), 110.664);
-    },
-    test_diffminutes: function()
+    }
+    test_diffminutes()
     {
         this.eq("Diff minutes", (new MTime("01:02:03")).diffMinutes("01:04:03"), 2);
         this.eq("Diff minutes neg", (new MTime("01:02:03")).diffMinutes("01:00:03"), -2);
@@ -143,8 +145,8 @@ TestMTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         this.eq("Diff minutes hours", (new MTime("01:02:03")).diffMinutes("13:02:03"), 720);
         this.eq("Diff minutes seconds", (new MTime("01:02:03")).diffMinutes("15:40:27"), 878.4);
         this.eq("Diff minutes millis", (new MTime("01:02:03")).diffMinutes("15:41:53.4"), 879.84);
-    },
-    test_diffseconds: function()
+    }
+    test_diffseconds()
     {
         this.eq("Diff seconds", (new MTime("01:02:03")).diffSeconds("01:02:05"), 2);
         this.eq("Diff seconds carry", (new MTime("01:02:03")).diffSeconds("01:03:01"), 58);
@@ -153,8 +155,8 @@ TestMTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         this.eq("Diff seconds hours", (new MTime("01:02:03")).diffSeconds("13:02:03"), 43200);
         this.eq("Diff seconds seconds", (new MTime("01:02:03")).diffSeconds("15:40:27"), 52704);
         this.eq("Diff seconds millis", (new MTime("01:02:03")).diffSeconds("15:41:53.4"), 52790.4);
-    },
-    test_diffmillis: function()
+    }
+    test_diffmillis()
     {
         this.eq("Diff millis", (new MTime("01:02:03.123")).diffMilliseconds("01:02:03.326"), 203);
         this.eq("Diff millis carry", (new MTime("01:02:03.123")).diffMilliseconds("01:02:04.1"), 977);
@@ -163,8 +165,8 @@ TestMTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         this.eq("Diff millis hours", (new MTime("01:02:03")).diffMilliseconds("13:02:03"), 43200000);
         this.eq("Diff millis seconds", (new MTime("01:02:03")).diffMilliseconds("15:40:27"), 52704000);
         this.eq("Diff millis millis", (new MTime("01:02:03")).diffMilliseconds("15:41:53.4"), 52790400);
-    },
-    test_gets: function()
+    }
+    test_gets()
     {
         var da = (new MTime("03:04:05.678")).addDays(2);
 
@@ -173,8 +175,8 @@ TestMTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         this.eq("minutes", da.getMinutes(), 4);
         this.eq("seconds", da.getSeconds(), 5);
         this.eq("millis", da.getMilliseconds(), 678);
-    },
-    test_sets: function()
+    }
+    test_sets()
     {
         // Does _rationalise as well
         var db = (new MTime("03:04:05.678")).addDays(2);
@@ -202,7 +204,7 @@ TestMTime.prototype  = Object.assign(Object.create(UnitTest.prototype), {
         // Do short string here
         this.eq("Short string", db.toShortString(), "03:04");
     }
-});
+}
 
 function dounittest()
 {
@@ -211,4 +213,6 @@ function dounittest()
     ut.run();
     ut.displayresults();
 }
+
+window.dounittest = dounittest;
 
