@@ -15,7 +15,7 @@ import {UnitTest} from "./unittest.js";
 import {MDate, MTime, MDateTime} from "../mdatetime.js";
 import {MDecimal} from "../mdecimal.js";
 
-class TestMTimeextends UnitTest {
+class TestMTime extends UnitTest {
     test_create()
     {
         this.eq("undefined", (new MTime()).toString(), "");

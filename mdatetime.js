@@ -302,7 +302,7 @@ class MDate extends MDateTimeBase {
     now()
     {
         this.reset();
-        this._date  = new Date();
+        this._floor(new Date());
         this.setNull(false);
         return this;
     }
@@ -558,12 +558,10 @@ class MDate extends MDateTimeBase {
     _floor(date)
     {
         // Get rid of hours etc
-        if(!this.isValue())
-            return null;
-        else
-            return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+        this._date = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+        // Return this._date for possible backwards compatability issies
+        return this._date;
     }
-
 }
 
 
